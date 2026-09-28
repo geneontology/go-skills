@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Skill validation and regression tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '22'
+      - name: Install skill validator
+        run: python -m pip install -r tests/requirements.txt
+      - name: Validate SKILL.md syntax and run regression tests
+        run: python -m unittest discover -s tests -v
+      - name: Check shell syntax
+        run: |
+          git ls-files -z 'skills/**/*.sh' | while IFS= read -r -d '' script; do
+            bash -n "$script"
+          done
+      - name: Check skill discovery
+        run: |
+          for skill in skills/*/; do
+            npx --yes skills@1.7.0 add ./ --skill "$(basename "$skill")" -l
+          done

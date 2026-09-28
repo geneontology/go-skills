@@ -48,11 +48,11 @@ fi
 # ---- 2. organism directories (sparse checkouts only) -----------------------
 if [ -d "$AIGR_HOME/.git" ] && git -C "$AIGR_HOME" sparse-checkout list >/dev/null 2>&1; then
   for org in ${AIGR_ORGANISMS:-}; do
-    if [ ! -d "$AIGR_HOME/genes/$org" ]; then
-      say "adding genes/$org to the sparse checkout"
-      git -C "$AIGR_HOME" sparse-checkout add "genes/$org" "history/genes/$org" 2>/dev/null \
-        || say "note: genes/$org is not in the repo yet; fetch-gene will create it"
-    fi
+    # A directory can exist with only a single reference gene checked out.
+    # Adding the whole cone is idempotent and also includes review history.
+    say "adding genes/$org to the sparse checkout"
+    git -C "$AIGR_HOME" sparse-checkout add "genes/$org" "history/genes/$org" \
+      || fail "could not hydrate genes/$org; do not fetch genes until this is resolved"
   done
 fi
 
@@ -75,7 +75,18 @@ echo "ai-gene-review is ready"
 say "AIGR_HOME:   $AIGR_HOME"
 say "checkout:    $( [ -d "$AIGR_HOME/.git" ] && { git -C "$AIGR_HOME" sparse-checkout list >/dev/null 2>&1 && echo sparse || echo full; } || echo 'plain directory (no .git)')"
 say "revision:    $(git -C "$AIGR_HOME" log -1 --format='%h %ad' --date=short 2>/dev/null || echo unknown)"
-say "organisms:   $(ls "$AIGR_HOME/genes" 2>/dev/null | tr '\n' ' ')"
+if sparse_dirs=$(git -C "$AIGR_HOME" sparse-checkout list 2>/dev/null); then
+  # Only whole organism cones count; genes/human/SHH does not mean all of human.
+  organisms=$(printf '%s\n' "$sparse_dirs" | awk -F/ '
+    $0 == "genes" { printf "(all organisms) " }
+    $1 == "genes" && NF == 2 { printf "%s ", $2 }
+  ')
+else
+  organisms=$(for dir in "$AIGR_HOME"/genes/*; do
+    [ ! -d "$dir" ] || printf '%s ' "${dir##*/}"
+  done)
+fi
+say "organisms:   ${organisms:-none}"
 say "venv:        ${UV_PROJECT_ENVIRONMENT:-$AIGR_HOME/.venv}"
 say "just:        $(command -v just)"
 missing=""

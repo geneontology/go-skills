@@ -15,7 +15,7 @@ compatibility: >
   (to install uv). No GitHub credentials needed to review; only to open a PR.
 argument-hint: "[ORGANISM] [GENE_SYMBOL]"
 metadata:
-  version: "0.1.1"
+  version: "0.1.2"
   source: https://github.com/geneontology/go-skills/tree/main/skills/gene-review
   toolkit: https://github.com/ai4curation/ai-gene-review
   maintainer: geneontology
@@ -220,6 +220,11 @@ icon at the top of the browser; it does not always update on its own.
 - The organism directory is missing → `git -C "$AIGR_HOME" sparse-checkout add genes/<ORG>`;
   if the organism is new to the repo, `just fetch-gene` creates it.
 - To force a full working tree: `AIGR_FULL=1` on the bootstrap (about 4 GB).
+- `git add` says paths *"exist outside of your sparse-checkout definition"* → use
+  `git add --sparse <paths>` for `publications/`, or add the cone for anything under
+  `genes/` or `history/` (`git sparse-checkout add history/genes/<ORG>`), then re-add.
+- `gh pr create` fails with *"No commits between main and <branch>"* → the branch
+  was pushed with nothing on it; check `git log origin/main..HEAD`, commit, push again.
 
 ## Advanced — contributing a review back
 
@@ -246,22 +251,58 @@ running, and stop at the first thing that does not work rather than improvising.
 3. **Git identity.** `git config --global user.name` and `user.email`; if either is
    empty, take the name from `gh api user --jq .name` and ask the curator which
    email to use (their GitHub noreply address is fine if they prefer privacy).
-4. **Branch and commit, from inside `$AIGR_HOME`.** `git checkout -b
-   review-<ORGANISM>-<GENE>`. Scaffold a history record as the repository requires:
+4. **Branch, render, history record — from inside `$AIGR_HOME`.**
+   `git fetch origin main && git checkout -b review-<ORGANISM>-<GENE>`. Re-run
+   `just render <ORGANISM> <GENE>` so the committed HTML matches the final YAML.
+   Scaffold the history record the repository requires:
    `just new-history --kind gene --organism <ORGANISM> --slug <GENE> --event CREATE
    --outcome changed --summary "Create review: <ORGANISM> <GENE>" --agent-tool
-   claude-code --model <model> --details "<one paragraph>"`, then `just
-   validate-history <path it printed>`. Add `genes/<ORGANISM>/<GENE>/`,
-   `history/genes/<ORGANISM>/<GENE>/`, and the `publications/PMID_*.md` files the
-   review cites; commit with a message of the form `Create gene review: <ORGANISM>
-   <GENE>`.
-5. **Push and open the PR.** `git push -u origin review-<ORGANISM>-<GENE>`, then
+   claude-code --model <model> --details "<one paragraph>"`, then
+   `just validate-history <path it printed>`. Use `--event EDIT` and a summary such
+   as `Re-review <GENE> against current GOA` when you augmented an existing review;
+   add `--issue N` or `--url <URL>` for anything the work relates to. Never write
+   the record's filename or session id by hand.
+5. **Stage explicitly; never `git add -A`.** The sparse checkout refuses paths
+   outside its cones with *"matched paths that exist outside of your
+   sparse-checkout definition, so will not be updated in the index"*, and
+   `publications/` is never in a cone. Run these as separate commands, not one
+   `&&` chain, so a refusal cannot silently skip the commit:
+
+   ```bash
+   git add genes/<ORGANISM>/<GENE> history/genes/<ORGANISM>/<GENE>
+   git add --sparse $(git status --short | awk '$1=="??" && $2 ~ /^publications\//{print $2}')
+   git diff --cached --name-status
+   ```
+
+   `--sparse` (git 2.35+) stages files outside the cones without hydrating the
+   whole directory. Include only the newly cached `publications/PMID_*.md` your
+   review quotes; CI's reference validator needs them. Leave out `uv.lock`,
+   `cache/go/terms.csv`, and re-fetched copies of already-tracked publications
+   whose diff is whitespace only (`git diff --stat publications/` shows them):
+   the environment sync and the validator touch these as side effects. The PR
+   template says not to commit derived files, yet the repository tracks
+   `*-goa.tsv`, `*-uniprot.txt` and the rendered HTML for every review; include
+   the gene directory as `fetch-gene` and `render` produced it, and say so in the
+   PR body. Read the staged list back before committing.
+6. **Commit and confirm there is something to push.** Commit with a message of the
+   form `Create gene review: <ORGANISM> <GENE>` (or `Re-review ...`). Then run
+   `git log origin/main..HEAD --oneline`; if it prints nothing, the commit did not
+   happen (usually a refused `git add` earlier). Do not push until it lists your
+   commit.
+7. **Push and open the PR.** `git push -u origin review-<ORGANISM>-<GENE>`, then
    `gh pr create --repo ai4curation/ai-gene-review --head review-<ORGANISM>-<GENE>
    --base main --fill` and edit the body to follow the repository's PR template
-   (`.github/PULL_REQUEST_TEMPLATE.md`: summary, `just validate` output, test plan).
-   Pass `--head` explicitly; without it `gh` sometimes claims the branch was not
-   pushed.
-6. **Report the PR URL** and tell the curator that CI will validate the review and a
+   (`.github/PULL_REQUEST_TEMPLATE.md`: summary with `Closes #N` if a tracking
+   issue exists, `just validate` output, test plan). Pass `--head` explicitly;
+   without it `gh` sometimes claims the branch was not pushed. A *"Warning: N
+   uncommitted changes"* from `gh` refers to the side-effect files you left
+   unstaged and is fine. *"No commits between main and <branch>"* means the
+   branch was pushed empty: go back to step 6.
+8. **Link the PR from the history record.** Append the PR URL to `links.prs` in
+   the record from step 4, run `just validate-history` on it again, commit
+   (`History record: link PR #N`), and push. Records are append-only for their
+   target path, but adding links before merge is expected.
+9. **Report the PR URL** and tell the curator that CI will validate the review and a
    maintainer will look at it; they do not need to do anything further.
 
 If the push is refused with a permissions error, the curator does not have write

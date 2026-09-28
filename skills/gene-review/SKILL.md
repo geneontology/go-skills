@@ -15,7 +15,7 @@ compatibility: >
   (to install uv). No GitHub credentials needed to review; only to open a PR.
 argument-hint: "[ORGANISM] [GENE_SYMBOL]"
 metadata:
-  version: "0.1.0"
+  version: "0.1.1"
   source: https://github.com/geneontology/go-skills/tree/main/skills/gene-review
   toolkit: https://github.com/ai4curation/ai-gene-review
   maintainer: geneontology
@@ -62,8 +62,8 @@ commands, so one `cd` is enough; re-`cd` if you move elsewhere.
 
 ## Adding another organism to the checkout
 
-The checkout is *sparse*: only the organism directories that have been asked for
-exist on disk under `genes/`. If the curator turns to a different organism (say
+The checkout is *sparse*: an organism directory can exist on disk while some of
+its committed reviews are excluded. If the curator turns to a different organism (say
 SCHPO after starting with DANRE), hydrate that directory first. Either re-run the
 bootstrap with the new organism, or use git directly:
 
@@ -73,9 +73,18 @@ git -C "$AIGR_HOME" sparse-checkout add genes/SCHPO history/genes/SCHPO
 
 This pulls the files for that organism from GitHub on the spot (a few seconds,
 tens of MB; SCHPO has about 150 reviewed genes). `git -C "$AIGR_HOME"
-sparse-checkout list` shows what is currently hydrated. If the organism has no
-directory in the repository yet, the command fails harmlessly and `just fetch-gene`
-creates it when the first gene is fetched.
+sparse-checkout list` shows the selected cones. An exact `genes/<ORGANISM>` entry
+includes the whole organism; `genes/<ORGANISM>/<GENE>` includes only one gene.
+An organism not yet in the repository can still be added to the sparse selection;
+`just fetch-gene` creates its directory when the first gene is fetched. If adding
+the cone fails, resolve the error before fetching.
+
+For ortholog/paralog reviews used as references, also re-run the bootstrap with
+`AIGR_ORGANISMS="<ORGANISM>"`. If you add an individual gene with
+`git sparse-checkout add genes/<ORGANISM>/<GENE>`, follow it by adding the whole
+`genes/<ORGANISM>` and `history/genes/<ORGANISM>` cones before fetching any gene
+from that organism. The bootstrap's `organisms:` line reports whole organism
+cones, not partially populated directories.
 
 Ignore a warning of the form *"paths are not up to date and were left despite
 sparse patterns"* naming files under `publications/`. It is cosmetic: the
@@ -95,7 +104,43 @@ outside it. Read these before touching any YAML, in this order:
 3. `$AIGR_HOME/.claude/skills/annotation-reviewer/SKILL.md` — how to judge each
    annotation and fill in `existing_annotations[].review`.
 
-Follow the review skill literally, substituting `$ARGUMENTS` for its placeholders.
+### Before fetching: distinguish an existing review from a new gene
+
+Before any `just fetch-gene`, check both Git and the working tree. A missing file
+on disk does **not** mean a new review: it may be excluded by sparse checkout.
+From `$AIGR_HOME`, substitute the actual organism and gene in these commands:
+
+```bash
+git cat-file -e HEAD:genes/<ORGANISM>/<GENE>/<GENE>-ai-review.yaml
+git status --short -- genes/<ORGANISM>/<GENE>
+```
+
+- If `cat-file` succeeds, this is an **existing review to augment**. In a sparse
+  checkout, run `git sparse-checkout add genes/<ORGANISM> history/genes/<ORGANISM>`
+  and confirm the YAML is on disk before fetching. Read and preserve its reviews.
+- If it is absent from `HEAD` but the YAML exists locally, also augment it and
+  preserve the local work. If the Git check fails for any reason other than a
+  missing path (for example, an invalid `HEAD`), resolve that before proceeding.
+- Only if the review is absent from both `HEAD` and disk should you use
+  `just fetch-gene <ORGANISM> <GENE>` to seed a new review.
+
+For an existing review, fetch only if its derived data needs refreshing, after
+confirming the YAML is present and inspecting the pre-edit status below. Then add
+missing GOA rows without replacing existing annotations or their reviews:
+
+```bash
+uv run ai-gene-review seed-goa genes/<ORGANISM>/<GENE>/<GENE>-ai-review.yaml
+```
+
+Follow the inner skill's **augment an existing review** path. When refreshed GOA
+changes a GO_REF, an older row can fail validation as "not in GOA". Compare it
+with the replacement GOA row and, when it represents the same annotation with
+updated provenance, carry the review onto that row (updating its rationale or
+references as needed). Reconcile the obsolete row with the current GOA data; do
+not drop the annotation just because its GO_REF changed. Validate the result.
+
+With this existing/new decision made, follow the review skill, substituting
+`$ARGUMENTS` for its placeholders.
 Where it says to invoke the annotation-reviewer subagent, do that work yourself
 following the annotation-reviewer skill, unless a subagent is available to you.
 
@@ -147,6 +192,11 @@ icon at the top of the browser; it does not always update on its own.
 
 ## Rules that apply because you are running from outside the repository
 
+- **Check before fetching or editing.** Run
+  `git status --short -- genes/<ORGANISM>/<GENE>` and inspect any existing diff.
+  An `M` on a review you have not edited can signal an earlier clobber by
+  `fetch-gene`. Compare it with `git show HEAD:genes/<ORGANISM>/<GENE>/<GENE>-ai-review.yaml`
+  before continuing. Preserve local work; do not blindly restore over it.
 - **Validate explicitly.** Inside the repo, hooks validate a review file on every
   edit. Those hooks do not fire here. After every edit to `*-ai-review.yaml`, run
   `just validate <ORGANISM> <GENE>` and fix what it reports before moving on.

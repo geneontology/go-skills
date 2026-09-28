@@ -37,6 +37,27 @@ skills/
 Skill names are lowercase with hyphens and must match their directory name. See the
 [specification](https://agentskills.io/specification) for the frontmatter fields.
 
+## Tests
+
+CI runs on pull requests and pushes to `main`. It validates every skill with the
+[Agent Skills reference parser and validator](https://agentskills.io/specification#validation),
+allowing only the repository's `argument-hint` extension in addition to the spec
+fields. It also enforces `metadata.version`, `metadata.source`, and the under-500-line
+limit, checks shell syntax and skill discovery, and runs the bootstrap regression
+tests in temporary homes with real Git repositories and stubbed `uv`/`just`.
+
+CI uses uv to manage Python and the pinned test dependencies. Run the same checks
+locally with:
+
+```bash
+uv run --python 3.12 --with-requirements tests/requirements.txt python -m unittest discover -s tests -v
+```
+
+The validator fixtures check that malformed YAML, duplicate or unknown fields,
+invalid names, and other invalid skill metadata fail validation. The specification
+does not restrict the Markdown body; these checks validate skill structure and
+frontmatter, not the quality of the instructions.
+
 ## Contributing
 
 Open an issue or PR here. Keep a `SKILL.md` under 500 lines; move detail into

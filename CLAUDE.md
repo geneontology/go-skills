@@ -1,8 +1,10 @@
 # CLAUDE.md — go-skills
 
 Agent skills (`SKILL.md`, https://agentskills.io) for GO curation. One directory per
-skill under `skills/`. Skills here are front doors to toolkits that live in other
-repositories; they must work from a fresh `$HOME` with no checkout and no credentials.
+skill under `skills/`. Skills here are either front doors to toolkits that live in
+other repositories or self-contained GO curation skills; either way they must work
+from a fresh `$HOME` with no checkout, and any credential they need (e.g. a barista
+token) must be obtained by following the skill itself.
 
 Rules:
 

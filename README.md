@@ -46,7 +46,8 @@ fields. It also enforces `metadata.version`, `metadata.source`, and the under-50
 limit, checks shell syntax and skill discovery, and runs the bootstrap regression
 tests in temporary homes with real Git repositories and stubbed `uv`/`just`.
 
-Run the Python checks locally with Python 3.11+ and the pinned test dependencies:
+CI uses uv to manage Python and the pinned test dependencies. Run the same checks
+locally with:
 
 ```bash
 uv run --python 3.12 --with-requirements tests/requirements.txt python -m unittest discover -s tests -v

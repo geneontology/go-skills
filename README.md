@@ -67,5 +67,7 @@ frontmatter, not the quality of the instructions.
 
 ## Contributing
 
-Open an issue or PR here. Keep a `SKILL.md` under 500 lines; move detail into
-`references/`. Skills should work from a fresh home directory with no credentials.
+See [CONTRIBUTING.md](CONTRIBUTING.md): edit on GitHub in the browser, or from a
+GO AI Hub session in your `~/go-skills` checkout, then open a pull request. Keep a
+`SKILL.md` under 500 lines; move detail into `references/`. Skills should work
+from a fresh home directory with no credentials.

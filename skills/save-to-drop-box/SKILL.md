@@ -143,23 +143,34 @@ gh pr create --repo geneontology/go-cam-drop-box \
   --body "What the model represents, in a few lines. Built and stored on noctua-dev as gomodel:<id>; YAML and TTL exported from the same stored state."
 ```
 
-**`false`:** fork, then the same steps with the fork as `origin`.
+**`false`:** fork (once; a second run reuses the existing fork), bring the
+fork's `main` up to date, and do the same steps with the fork as `origin`.
+`gh repo fork` rejects `--remote` when a repository is named, so clone in a
+second step.
 
 ```sh
+LOGIN=$(gh api user --jq .login)
+gh repo fork geneontology/go-cam-drop-box --clone=false --default-branch-only
+gh repo sync "$LOGIN/go-cam-drop-box" --source geneontology/go-cam-drop-box --branch main \
+  || echo "fork sync refused; branching from the fork's own main"
 mkdir -p ~/drop-box-out/<id> && cd ~/drop-box-out/<id>
-gh repo fork geneontology/go-cam-drop-box --clone --remote --default-branch-only -- repo
+gh repo clone "$LOGIN/go-cam-drop-box" repo -- --depth 1 --no-single-branch
 cd repo
-# ... git switch / cp / add / commit as above ...
+git switch -c add-<id>            # from the fork's main, whatever it holds
+# ... cp / add / commit as above ...
 git push -u origin add-<id>
+gh pr create --repo geneontology/go-cam-drop-box --head "$LOGIN:add-<id>" \
+  --title "Add model <id> (<short title>)" --body "..."
 ```
 
-If that push is refused with *"refusing to allow an OAuth App to create or
-update workflow `.github/workflows/validate.yml` without `workflow` scope"*,
-the curator's fork is behind the drop box and the push would carry a CI
-change the token may not write. Do not start a device-code login. Ask the
-curator to open `https://github.com/<their login>/go-cam-drop-box`, press
-**Sync fork → Update branch**, then `git fetch origin && git rebase origin/main`
-and push again.
+If `gh repo sync` is refused with *"Upstream commits contain workflow
+changes, which require the `workflow` scope"*, the token cannot carry a CI
+change into the fork. Do **not** start a device-code login; the branch is
+still fine: it starts from the fork's `main`, so the push carries only the
+curator's commit, and the PR against `geneontology/go-cam-drop-box:main` is
+reviewed and tested on the merge of the two. To bring the fork up to date
+anyway, the curator can press **Sync fork → Update branch** on
+`https://github.com/$LOGIN/go-cam-drop-box`.
 
 **Not final yet? Open it as a draft.** If the curator says more curation is
 coming (a review meeting, additions planned, "just parking this"), add

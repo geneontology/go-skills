@@ -112,15 +112,28 @@ gh auth login --hostname github.com --git-protocol https --web
 
 Tell the curator: *"Open https://github.com/login/device in a new browser tab,
 enter this code: `…`, and authorize."* Wait, then re-check `gh auth status`.
-The login persists in `~/.config/gh`. Only GitHub GO-organization members can
-submit.
+The login persists in `~/.config/gh`. Only people with the **`go-ai-hub`
+permission** in GO's `users.yaml` (geneontology/go-site) can submit; the drop
+box's CI checks the PR author. On the GO AI Hub, signing in to the hub already
+logged `gh` in, so `gh auth status` normally succeeds without this step.
 
-## Step 5 — fork, add both files, open the PR
+## Step 5 — branch, add both files, open the PR
+
+Work in a **fresh clone for this submission**, never in a clone left from an
+earlier save (stale branches and leftover files there have blocked saves).
+First find out whether the curator can push to the drop box itself:
 
 ```sh
-gh repo fork geneontology/go-cam-drop-box --clone --remote --default-branch-only
-cd go-cam-drop-box
-git checkout -b add-<id>
+gh api repos/geneontology/go-cam-drop-box --jq .permissions.push
+```
+
+**`true` (the usual case for hub members):** branch on the repository.
+
+```sh
+mkdir -p ~/drop-box-out/<id> && cd ~/drop-box-out/<id>
+gh repo clone geneontology/go-cam-drop-box repo -- --depth 1 --no-single-branch
+cd repo
+git switch -c add-<id>
 cp ~/drop-box-out/<id>.yaml ~/drop-box-out/<id>.ttl models/
 git add models/<id>.yaml models/<id>.ttl
 git commit -m "Add <id> (<short title>)"
@@ -129,6 +142,24 @@ gh pr create --repo geneontology/go-cam-drop-box \
   --title "Add model <id> (<short title>)" \
   --body "What the model represents, in a few lines. Built and stored on noctua-dev as gomodel:<id>; YAML and TTL exported from the same stored state."
 ```
+
+**`false`:** fork, then the same steps with the fork as `origin`.
+
+```sh
+mkdir -p ~/drop-box-out/<id> && cd ~/drop-box-out/<id>
+gh repo fork geneontology/go-cam-drop-box --clone --remote --default-branch-only -- repo
+cd repo
+# ... git switch / cp / add / commit as above ...
+git push -u origin add-<id>
+```
+
+If that push is refused with *"refusing to allow an OAuth App to create or
+update workflow `.github/workflows/validate.yml` without `workflow` scope"*,
+the curator's fork is behind the drop box and the push would carry a CI
+change the token may not write. Do not start a device-code login. Ask the
+curator to open `https://github.com/<their login>/go-cam-drop-box`, press
+**Sync fork → Update branch**, then `git fetch origin && git rebase origin/main`
+and push again.
 
 **Not final yet? Open it as a draft.** If the curator says more curation is
 coming (a review meeting, additions planned, "just parking this"), add

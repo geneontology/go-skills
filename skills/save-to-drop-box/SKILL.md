@@ -119,8 +119,21 @@ logged `gh` in, so `gh auth status` normally succeeds without this step.
 
 ## Step 5 — branch, add both files, open the PR
 
-Work in a **fresh clone for this submission**, never in a clone left from an
-earlier save (stale branches and leftover files there have blocked saves).
+Work in a **clone made for this submission** under `~/drop-box-out/<id>/repo`,
+never in a clone left from an earlier save of another model (stale branches
+and leftover files there have blocked saves). If that directory already exists
+from an earlier attempt at this same model, reuse it only when it is on
+`add-<id>`; otherwise remove it and clone again:
+
+```sh
+R=~/drop-box-out/<id>/repo
+if [ -d "$R/.git" ] && [ "$(git -C "$R" branch --show-current)" = "add-<id>" ]; then
+  echo "reusing $R"            # fixes: copy the re-exported files, commit, push
+else
+  rm -rf "$R"
+fi
+```
+
 First find out whether the curator can push to the drop box itself:
 
 ```sh
@@ -131,9 +144,9 @@ gh api repos/geneontology/go-cam-drop-box --jq .permissions.push
 
 ```sh
 mkdir -p ~/drop-box-out/<id> && cd ~/drop-box-out/<id>
-gh repo clone geneontology/go-cam-drop-box repo -- --depth 1 --no-single-branch
+[ -d repo/.git ] || gh repo clone geneontology/go-cam-drop-box repo -- --depth 1 --no-single-branch
 cd repo
-git switch -c add-<id>
+git switch -c add-<id> 2>/dev/null || git switch add-<id>
 cp ~/drop-box-out/<id>.yaml ~/drop-box-out/<id>.ttl models/
 git add models/<id>.yaml models/<id>.ttl
 git commit -m "Add <id> (<short title>)"
@@ -151,12 +164,15 @@ second step.
 ```sh
 LOGIN=$(gh api user --jq .login)
 gh repo fork geneontology/go-cam-drop-box --clone=false --default-branch-only
+for i in 1 2 3 4 5 6; do                      # a new fork takes a few seconds to exist
+  gh api "repos/$LOGIN/go-cam-drop-box" --jq .full_name >/dev/null 2>&1 && break; sleep 10
+done
 gh repo sync "$LOGIN/go-cam-drop-box" --source geneontology/go-cam-drop-box --branch main \
   || echo "fork sync refused; branching from the fork's own main"
 mkdir -p ~/drop-box-out/<id> && cd ~/drop-box-out/<id>
-gh repo clone "$LOGIN/go-cam-drop-box" repo -- --depth 1 --no-single-branch
+[ -d repo/.git ] || gh repo clone "$LOGIN/go-cam-drop-box" repo -- --depth 1 --no-single-branch
 cd repo
-git switch -c add-<id>            # from the fork's main, whatever it holds
+git switch -c add-<id> 2>/dev/null || git switch add-<id>   # from the fork's main
 # ... cp / add / commit as above ...
 git push -u origin add-<id>
 gh pr create --repo geneontology/go-cam-drop-box --head "$LOGIN:add-<id>" \

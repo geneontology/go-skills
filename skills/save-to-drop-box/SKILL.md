@@ -112,15 +112,41 @@ gh auth login --hostname github.com --git-protocol https --web
 
 Tell the curator: *"Open https://github.com/login/device in a new browser tab,
 enter this code: `…`, and authorize."* Wait, then re-check `gh auth status`.
-The login persists in `~/.config/gh`. Only GitHub GO-organization members can
-submit.
+The login persists in `~/.config/gh`. Only people with the **`go-ai-hub`
+permission** in GO's `users.yaml` (geneontology/go-site) can submit; the drop
+box's CI checks the PR author. On the GO AI Hub, signing in to the hub already
+logged `gh` in, so `gh auth status` normally succeeds without this step.
 
-## Step 5 — fork, add both files, open the PR
+## Step 5 — branch, add both files, open the PR
+
+Work in a **clone made for this submission** under `~/drop-box-out/<id>/repo`,
+never in a clone left from an earlier save of another model (stale branches
+and leftover files there have blocked saves). If that directory already exists
+from an earlier attempt at this same model, reuse it only when it is on
+`add-<id>`; otherwise remove it and clone again:
 
 ```sh
-gh repo fork geneontology/go-cam-drop-box --clone --remote --default-branch-only
-cd go-cam-drop-box
-git checkout -b add-<id>
+R=~/drop-box-out/<id>/repo
+if [ -d "$R/.git" ] && [ "$(git -C "$R" branch --show-current)" = "add-<id>" ]; then
+  echo "reusing $R"            # fixes: copy the re-exported files, commit, push
+else
+  rm -rf "$R"
+fi
+```
+
+First find out whether the curator can push to the drop box itself:
+
+```sh
+gh api repos/geneontology/go-cam-drop-box --jq .permissions.push
+```
+
+**`true` (the usual case for hub members):** branch on the repository.
+
+```sh
+mkdir -p ~/drop-box-out/<id> && cd ~/drop-box-out/<id>
+[ -d repo/.git ] || gh repo clone geneontology/go-cam-drop-box repo -- --depth 1 --no-single-branch
+cd repo
+git switch -c add-<id> 2>/dev/null || git switch add-<id>
 cp ~/drop-box-out/<id>.yaml ~/drop-box-out/<id>.ttl models/
 git add models/<id>.yaml models/<id>.ttl
 git commit -m "Add <id> (<short title>)"
@@ -129,6 +155,38 @@ gh pr create --repo geneontology/go-cam-drop-box \
   --title "Add model <id> (<short title>)" \
   --body "What the model represents, in a few lines. Built and stored on noctua-dev as gomodel:<id>; YAML and TTL exported from the same stored state."
 ```
+
+**`false`:** fork (once; a second run reuses the existing fork), bring the
+fork's `main` up to date, and do the same steps with the fork as `origin`.
+`gh repo fork` rejects `--remote` when a repository is named, so clone in a
+second step.
+
+```sh
+LOGIN=$(gh api user --jq .login)
+gh repo fork geneontology/go-cam-drop-box --clone=false --default-branch-only
+for i in 1 2 3 4 5 6; do                      # a new fork takes a few seconds to exist
+  gh api "repos/$LOGIN/go-cam-drop-box" --jq .full_name >/dev/null 2>&1 && break; sleep 10
+done
+gh repo sync "$LOGIN/go-cam-drop-box" --source geneontology/go-cam-drop-box --branch main \
+  || echo "fork sync refused; branching from the fork's own main"
+mkdir -p ~/drop-box-out/<id> && cd ~/drop-box-out/<id>
+[ -d repo/.git ] || gh repo clone "$LOGIN/go-cam-drop-box" repo -- --depth 1 --no-single-branch
+cd repo
+git switch -c add-<id> 2>/dev/null || git switch add-<id>   # from the fork's main
+# ... cp / add / commit as above ...
+git push -u origin add-<id>
+gh pr create --repo geneontology/go-cam-drop-box --head "$LOGIN:add-<id>" \
+  --title "Add model <id> (<short title>)" --body "..."
+```
+
+If `gh repo sync` is refused with *"Upstream commits contain workflow
+changes, which require the `workflow` scope"*, the token cannot carry a CI
+change into the fork. Do **not** start a device-code login; the branch is
+still fine: it starts from the fork's `main`, so the push carries only the
+curator's commit, and the PR against `geneontology/go-cam-drop-box:main` is
+reviewed and tested on the merge of the two. To bring the fork up to date
+anyway, the curator can press **Sync fork → Update branch** on
+`https://github.com/$LOGIN/go-cam-drop-box`.
 
 **Not final yet? Open it as a draft.** If the curator says more curation is
 coming (a review meeting, additions planned, "just parking this"), add

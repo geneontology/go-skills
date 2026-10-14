@@ -58,7 +58,7 @@ that is a separate step with the `noctua` skill.
 - **Explicitly list every paper for which only the abstract was available**, and
   do NOT infer findings beyond what the abstract states. Curation quality
   depends on this.
-- Use `gocam-best-practice` to shape the proposed annotations correctly (aspect
+- Use `gocam-best-practice\references` to shape the proposed annotations correctly (aspect
   boundaries, causal relations, appropriate GO terms) and the OLS MCP to pick
   and verify exact GO IDs.
 

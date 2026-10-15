@@ -10,9 +10,9 @@ activity-type files); read the ones that match the model's activities.
 
 | Severity | Meaning |
 |---|---|
-| critical | The model says something false, or cannot stand in production as is: wrong gene, wrong species of data under an experimental code, a claim not in the paper, a missing enabler, an obsolete or do-not-annotate term. |
-| major | A fact is unsupported or mis-coded: ISS without an experimental source, a direct relation with no known mechanism, a reference that does not show the fact, a fact with no evidence. |
-| moderate | Correct in substance but weakly supported or imprecise: a self-referential IC, a too-general term, an unverifiable reference, missing location or process. |
+| critical | The model says something false, or cannot stand in production as is: wrong gene, wrong species of data under an experimental code, a claim not in the paper, a missing enabler, a fact with no evidence, a single-activity model, an obsolete or do-not-annotate term. |
+| major | A fact is unsupported or mis-coded: ISS without an experimental source, a direct relation with no known mechanism, a reference that does not show the fact. |
+| moderate | Correct in substance but weakly supported or imprecise: a self-referential IC, a too-general term, an unverifiable reference, a bare DOI where a PMID exists, missing location or process. |
 | minor | Hygiene and style: malformed reference, duplicate evidence line, leftover comment. |
 | note | Not a defect: a remark, a question for the curator, or something that is fine and worth saying. |
 
@@ -62,12 +62,16 @@ context before it becomes a finding.
 - Recipe mismatch: GO_REF:0000024 only with ISS-family codes; IBA only with
   GO_REF:0000033. **[flag]** `with: recipe`
 - Reference form: `PMID:n`, `GO_REF:nnnnnnn`; one reference per evidence line;
-  a bare DOI when a PMID exists is a minor. **[flag]** `evidence`
+  the same evidence line twice on one fact is a duplicate; a bare DOI when a
+  PMID exists is moderate (`gocam-review` rated it a blocker, `gocam-qc`
+  hygiene). **[flag]** `evidence`
 - IEA and IBA in a GO-CAM are copied from an existing annotation, not created.
   NAS and TAS are allowed but weak; note when a primary paper exists.
 - Attribution: a sentence like "X does Y (Author et al.)" in paper P is a
   citation, not P's evidence. If the model cites P for a fact P attributes to
-  Q, the fix is to re-source to Q.
+  Q, the fix is to re-source to Q. Finding Q, or any better reference, follows
+  the Step 5 limits: papers already in the model first, then one search, three
+  facts per review.
 
 ## C. ISS and orthology
 
@@ -184,6 +188,9 @@ references. Without the full text, "not verified (abstract only)".
 - Process context: each MF `part of` the right process; nested processes make
   sense. Cytokine-signalling models: GO:0019221 in every activity unit;
   sibling cytokine-production terms collapsed to GO:0001819.
+- Models bound for the drop box (gocam-py YAML): the YAML keeps one `part of`
+  chain per activity, so parallel process branches on one activity need a
+  single nested chain; flag them.
 
 ## H. Lineage
 
@@ -192,7 +199,8 @@ references. Without the full text, "not verified (abstract only)".
   reason: do not re-raise (except E). Keep ids stable.
 - Parent model ("Derived from" in the header): fetch, `--facts-only` both,
   diff. Fixes made to the parent after the copy are often missing from the
-  child, and edits in the child may need carrying back.
+  child; where an edit in the child looks as if it belongs in the parent too,
+  say so in the report for the author to decide. Nothing is edited here.
 - Dev versus production: if the model is in both and they differ, say how.
 
 ## I. Literature honesty

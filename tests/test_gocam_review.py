@@ -83,6 +83,7 @@ m:b a owl:NamedIndividual, obo:GO_0003674 .
 m:gp a owl:NamedIndividual, <http://identifiers.org/mgi/MGI:97490> .
 m:ev a owl:NamedIndividual, obo:ECO_0000314 ; dc:source "PMID:1" .
 m:a obo:RO_0002333 m:gp .
+[ a owl:Axiom ; owl:annotatedSource m:a ; owl:annotatedProperty obo:RO_0002333 ; owl:annotatedTarget m:gp ; lego:evidence m:ev ] .
 """
 
 
@@ -125,8 +126,8 @@ m:a obo:RO_0002629 m:b .
         out, f = analyse(ttl)
         msgs = self.errors(f)
         native = [m for m in msgs if "connected to nothing" in m]
-        self.assertEqual(len(native), 3, msgs)   # lonely, b (no edge) and ev (no axiom cites it): the query says the same
-        self.assertTrue(any("check-disconnected-individuals.rq: 3 row" in m for m in msgs), msgs)
+        self.assertEqual(len(native), 2, msgs)   # lonely and b (no edge); the query says the same
+        self.assertTrue(any("check-disconnected-individuals.rq: 2 row" in m for m in msgs), msgs)
 
     def test_multiply_reified_edge_is_an_error_natively_and_by_query(self):
         ttl = PREFIXES + """
@@ -207,6 +208,104 @@ m:a obo:BFO_0000050 m:bp .
             self.assertEqual(r.returncode, 0, r.stderr)
             self.assertIn("GO:0003674 --directly positively regulates--> GO:0003674 ::", r.stdout)
             self.assertNotIn("m:a", r.stdout)
+
+
+class OnlineLikeTerms(gocam_qc.Terms):
+    """A stand-in for OLS: namespaces and an obsolete term, without network."""
+
+    def __init__(self):
+        super().__init__(offline=True)
+        self.offline = False
+
+    def lookup(self, term):
+        table = {"GO:0003674": ("molecular_function", None, False), "GO:0005634": ("nucleus", "cellular_component", False),
+                 "GO:0007155": ("cell adhesion", "biological_process", False), "GO:0004672": ("protein kinase activity", "molecular_function", False),
+                 "GO:0000001": ("old term", "biological_process", True)}
+        if term in table:
+            label, ns, obs = table[term]
+            return {"id": term, "label": label, "namespace": ns, "obsolete": obs, "subsets": ["gocheck_do_not_annotate"] if term == "GO:0007155" else [], "found": True}
+        return {"id": term, "label": None, "namespace": None, "obsolete": None, "subsets": [], "found": False}
+
+    def save(self):
+        pass
+
+
+def analyse_online_like(ttl):
+    g = gocam_qc.Graph(); g.parse(data=ttl, format="turtle")
+    f = gocam_qc.Findings()
+    out = gocam_qc.analyse(g, OnlineLikeTerms(), f, None)
+    return out, f
+
+
+class FlagCoverageTests(unittest.TestCase):
+    def msgs(self, f, sev=None):
+        return [x["message"] for x in f.items if sev is None or x["severity"] == sev]
+
+    def test_no_evidence_on_context_and_process_edges(self):
+        ttl = PREFIXES + "m:bp a owl:NamedIndividual, obo:GO_0007155 .\nm:a obo:BFO_0000050 m:bp .\nm:gp obo:RO_0002264 m:bp .\n"
+        out, f = analyse(ttl, sparql=False)
+        errs = " | ".join(self.msgs(f, "error"))
+        self.assertIn("part of", errs); self.assertIn("has no evidence", errs)
+        self.assertIn("acts upstream of or within", errs)
+
+    def test_duplicate_evidence_line(self):
+        ttl = PREFIXES + """
+m:ev2 a owl:NamedIndividual, obo:ECO_0000314 ; dc:source "PMID:1" .
+m:a obo:RO_0002629 m:b .
+[ a owl:Axiom ; owl:annotatedSource m:a ; owl:annotatedProperty obo:RO_0002629 ; owl:annotatedTarget m:b ; lego:evidence m:ev , m:ev2 ] .
+"""
+        out, f = analyse(ttl, sparql=False)
+        self.assertTrue(any("same evidence line more than once" in m for m in self.msgs(f, "minor")))
+
+    def test_circular_with_on_the_enabler_and_comma_separated_with(self):
+        ttl = PREFIXES + """
+m:evs a owl:NamedIndividual, obo:ECO_0000250 ; dc:source "GO_REF:0000024" ; lego:evidence-with "UniProtKB:Q9,MGI:MGI:97490" .
+m:a obo:RO_0002629 m:b .
+[ a owl:Axiom ; owl:annotatedSource m:a ; owl:annotatedProperty obo:RO_0002629 ; owl:annotatedTarget m:b ; lego:evidence m:evs ] .
+"""
+        out, f = analyse(ttl, sparql=False)
+        self.assertTrue(any("circular with/from" in m and "MGI:MGI:97490" in m for m in self.msgs(f)))
+        self.assertIn("UniProtKB:Q9", out["with_values"])   # split, not one literal
+
+    def test_iba_without_goref_and_single_activity(self):
+        ttl = PREFIXES.replace("m:b a owl:NamedIndividual, obo:GO_0003674 .\n", "") + """
+m:evb a owl:NamedIndividual, obo:ECO_0000318 ; dc:source "PMID:9" .
+m:bp a owl:NamedIndividual, obo:GO_0007155 .
+m:a obo:BFO_0000050 m:bp .
+[ a owl:Axiom ; owl:annotatedSource m:a ; owl:annotatedProperty obo:BFO_0000050 ; owl:annotatedTarget m:bp ; lego:evidence m:evb ] .
+"""
+        out, f = analyse(ttl, sparql=False)
+        w = " | ".join(self.msgs(f, "warning"))
+        self.assertIn("IBA without GO_REF:0000033", w)
+        self.assertIn("single-activity model", w)
+
+    def test_title_and_comment_notes(self):
+        ttl = PREFIXES.replace('dc:title "t"', 'dc:title "' + "x" * 130 + '" ; <http://www.w3.org/2000/01/rdf-schema#comment> "reviewer: please check Fig 3"')
+        out, f = analyse(ttl, sparql=False)
+        n = " | ".join(self.msgs(f, "note"))
+        self.assertIn("130 characters", n); self.assertIn("model comment to read", n)
+
+    def test_online_like_obsolete_subset_iep_and_mf_without_enabler(self):
+        ttl = PREFIXES + """
+m:k a owl:NamedIndividual, obo:GO_0004672 .
+m:old a owl:NamedIndividual, obo:GO_0000001 .
+m:cc a owl:NamedIndividual, obo:GO_0005634 .
+m:bp a owl:NamedIndividual, obo:GO_0007155 .
+m:eve a owl:NamedIndividual, obo:ECO_0000270 ; dc:source "PMID:5" .
+m:a obo:BFO_0000066 m:cc .
+m:a obo:BFO_0000050 m:bp .
+m:k obo:BFO_0000050 m:old .
+[ a owl:Axiom ; owl:annotatedSource m:a ; owl:annotatedProperty obo:BFO_0000066 ; owl:annotatedTarget m:cc ; lego:evidence m:eve ] .
+[ a owl:Axiom ; owl:annotatedSource m:a ; owl:annotatedProperty obo:BFO_0000050 ; owl:annotatedTarget m:bp ; lego:evidence m:ev ] .
+[ a owl:Axiom ; owl:annotatedSource m:k ; owl:annotatedProperty obo:BFO_0000050 ; owl:annotatedTarget m:old ; lego:evidence m:ev ] .
+"""
+        out, f = analyse_online_like(ttl)
+        all_ = " | ".join(self.msgs(f))
+        self.assertIn("GO:0000001 (old term) is obsolete", all_)
+        self.assertIn("GO:0007155 (cell adhesion) is in gocheck_do_not_annotate", all_)
+        self.assertIn("IEP on", all_); self.assertIn("cellular component", all_)
+        self.assertTrue(any("activity k (GO:0004672) has no enabled_by" in m for m in self.msgs(f, "warning")), all_)  # found by MF namespace, not by enabler
+        self.assertEqual(out["activity_count"], 3)
 
 
 class SuppliedFileTests(unittest.TestCase):

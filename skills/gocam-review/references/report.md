@@ -54,9 +54,9 @@ Scripts and queries run, terms checked (or offline), lookups made, limits reache
 ```markdown
 # Checklist: gomodel:<id>, round <n>, <date>
 
-| id | severity | group | where | problem | fix | status | notes |
-|---|---|---|---|---|---|---|---|
-| Q1 | major | C | ... | ... | ... | open | |
+| id | severity | group | where | problem | fix | Noctua comment | status | notes |
+|---|---|---|---|---|---|---|---|---|
+| Q1 | major | C | ... | ... | ... | "..." | open | |
 ```
 
 `status` is `open`, `done` or `declined`; the curator fills status and notes

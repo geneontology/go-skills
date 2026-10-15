@@ -300,7 +300,7 @@ def analyse(g: Graph, terms: Terms, f: Findings, sparql_dir: Path | None) -> dic
     for e in evidence_inds:
         ev_types = [t for t in types.get(e, []) if t.startswith("ECO:")]
         sources = sorted({str(x) for x in g.objects(e, DC.source)})
-        withs = sorted({str(x) for x in g.objects(e, LEGO["evidence-with"])})
+        withs = sorted({w.strip() for x in g.objects(e, LEGO["evidence-with"]) for w in re.split(r"[,|]", str(x)) if w.strip()})
         code = ECO_CODE.get(ev_types[0]) if ev_types else None
         evidence[e] = {"eco": ev_types[0] if ev_types else None, "eco_all": ev_types, "code": code, "sources": sources, "with": withs}
         if not ev_types:
@@ -311,7 +311,7 @@ def analyse(g: Graph, terms: Terms, f: Findings, sparql_dir: Path | None) -> dic
             if not REF_RE.match(src):
                 f.add("minor", "evidence", f"evidence {short(e)}: reference '{src}' is not in a recognised form (PMID:n, GO_REF:nnnnnnn, DOI:...)")
             elif src.upper().startswith("DOI:"):
-                f.add("minor", "evidence", f"evidence {short(e)} cites a bare DOI ({src}); a PMID is preferred when one exists")
+                f.add("warning", "evidence", f"evidence {short(e)} cites a bare DOI ({src}); use the PMID when one exists")
         if len(sources) > 1:
             f.add("minor", "evidence", f"evidence {short(e)} carries {len(sources)} references on one evidence line")
         if code in WITH_REQUIRED and not withs:
@@ -322,6 +322,10 @@ def analyse(g: Graph, terms: Terms, f: Findings, sparql_dir: Path | None) -> dic
             allowed = GOREF_CODES.get(src)
             if allowed and code and code not in allowed:
                 f.add("warning", "with", f"evidence {short(e)}: {src} is the reference for {'/'.join(sorted(allowed))}, not {code} (recipe mismatch)")
+        if code == "IBA" and "GO_REF:0000033" not in sources:
+            f.add("warning", "with", f"evidence {short(e)} is IBA without GO_REF:0000033 (recipe mismatch)")
+        if code == "ND":
+            f.add("note", "evidence", f"evidence {short(e)} is ND (no data) on a GO-CAM fact; worth a question")
         if not sources:
             f.add("warning", "evidence", f"evidence {short(e)} ({ev_types[0] if ev_types else '?'}) cites no source (dc:source)")
     out["evidence_count"] = len(evidence)
@@ -442,9 +446,12 @@ def analyse(g: Graph, terms: Terms, f: Findings, sparql_dir: Path | None) -> dic
 
     # --- facts without evidence; multiply reified edges; disconnected individuals
     for fa in facts:
-        if fa["p"] in CONTEXT or fa["p"] in CAUSAL:
+        if fa["p"] in CONTEXT or fa["p"] in CAUSAL or fa["p"] in PROCESS or fa["p"] in REGULATOR or fa["p"] not in REL:
             if not fa["evidence"]:
-                f.add("warning", "evidence", f"fact {short(fa['s'])} {REL.get(fa['p'], fa['p'])} {short(fa['o'])} has no evidence")
+                f.add("error", "evidence", f"fact {short(fa['s'])} {REL.get(fa['p'], fa['p'])} {short(fa['o'])} has no evidence")
+        tuples = [(evidence[e]["eco"], tuple(evidence[e]["sources"]), tuple(evidence[e]["with"])) for e in fa["evidence"] if e in evidence]
+        if len(tuples) != len(set(tuples)):
+            f.add("minor", "evidence", f"fact {short(fa['s'])} {REL.get(fa['p'], fa['p'])} {short(fa['o'])} carries the same evidence line more than once")
         if len(fa["axioms"]) > 1:
             f.add("error", "structure", f"edge {short(fa['s'])} {REL.get(fa['p'], fa['p'])} {short(fa['o'])} is reified {len(fa['axioms'])} times (noctua-models QC: multiply reified edge)")
     touched = set()
@@ -515,7 +522,7 @@ def analyse(g: Graph, terms: Terms, f: Findings, sparql_dir: Path | None) -> dic
             for w in ev.get("with", []):
                 with_values[w].append(f"{short(fa['s'])} {rel} {short(fa['o'])} ({ev.get('code')})")
                 # circular with: the value is the term being supported, the subject's own type, or the subject's enabler
-                enablers = {curie(x) for x in enabled.get(fa["s"], [])}
+                enablers = {t for x in enabled.get(fa["s"], []) for t in types.get(x, [])}
                 if w in o_types or w in s_types or w in enablers:
                     f.add("warning", "with", f"circular with/from on {short(fa['s'])} {rel} {short(fa['o'])}: {w} is the term or gene the fact itself concerns")
         fact_lines.append({"s": short(fa["s"]), "s_types": s_types, "rel": rel, "p": fa["p"], "o": short(fa["o"]), "o_types": o_types,
@@ -527,9 +534,9 @@ def analyse(g: Graph, terms: Terms, f: Findings, sparql_dir: Path | None) -> dic
     for fa in facts:
         for e in fa["evidence"]:
             if evidence.get(e, {}).get("code") == "IEP":
-                o_ns = [info(t).get("namespace") for t in types.get(fa["o"], [])]
-                if o_ns and "biological_process" not in o_ns and fa["p"] not in ("BFO:0000050",):
-                    f.add("warning", "with", f"IEP on {short(fa['s'])} {REL.get(fa['p'], fa['p'])} {short(fa['o'])}: expression evidence supports a process, not this")
+                o_ns = [ns for ns in (info(t).get("namespace") for t in types.get(fa["o"], [])) if ns]
+                if o_ns and "biological_process" not in o_ns:
+                    f.add("warning", "with", f"IEP on {short(fa['s'])} {REL.get(fa['p'], fa['p'])} {short(fa['o'])}: expression evidence supports a process, not a {o_ns[0].replace('_', ' ')}")
     # species of the entities vs the model taxon (MOD prefixes only; UniProtKB needs a lookup)
     model_taxa = set(header["taxon"])
     if model_taxa:
@@ -540,7 +547,7 @@ def analyse(g: Graph, terms: Terms, f: Findings, sparql_dir: Path | None) -> dic
                 if implied and implied not in model_taxa:
                     f.add("warning", "species", f"{t} ({pfx}) implies {implied}; the model's taxon is {', '.join(sorted(model_taxa))} (host-pathogen models excepted)")
     if len(activities) == 1:
-        f.add("note", "structure", "single-activity model: GO expects a GO-CAM to place the activity in a multi-activity flow")
+        f.add("warning", "structure", "single-activity model: GO does not accept a one-activity GO-CAM; it needs placing in a multi-activity flow")
     # evidence summary
     eco_counts = defaultdict(int)
     src_counts = defaultdict(int)

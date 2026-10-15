@@ -43,12 +43,16 @@ development model needs `dev`. Ask once if ambiguous.
 
 ```bash
 ID=<bare id>                                  # no gomodel: prefix in paths
+ls -d ~/reviews/*-$ID 2>/dev/null             # earlier rounds? read their checklist.md first
 R=~/reviews/$(date +%Y-%m-%d)-$ID; mkdir -p "$R"
-ls -d ~/reviews/*-$ID 2>/dev/null             # earlier rounds? read their checklist.md
 ```
 
 If an earlier round exists, read its `checklist.md` first: what was fixed,
 what was declined and why. Issue ids stay stable across rounds.
+
+`${CLAUDE_SKILL_DIR}` below is set by Claude while this skill runs; typed by
+hand, it is the path of this skill's directory (`~/.claude/skills/gocam-review`
+on the hub).
 
 ## Step 2: fetch (read-only, no credential)
 
@@ -57,16 +61,24 @@ bash "${CLAUDE_SKILL_DIR}/scripts/fetch_model.sh" "<id | URL | file>" "$R"     #
 ```
 
 Writes `$R/$ID.ttl` (and `$R/$ID.gpad` when Noctua has it) and prints the
-paths and the environment; use those. HTTP 400 means the id is not on that
-server; "could not reach" is a network problem, not a missing model.
+paths and the environment; use those, and keep the environment for Step 3:
+`ENV=production` or `ENV=dev`. HTTP 400 means the id is not on that server;
+"could not reach" is a network problem, not a missing model.
 
 ## Step 3: mechanical checks
 
 ```bash
+uv run --quiet --script "${CLAUDE_SKILL_DIR}/scripts/gocam_qc.py" "$R/$ID.ttl" --gpad "$R/$ID.gpad" \
+    --env "$ENV" --markdown "$R/qc.md" --json "$R/qc.json"
+```
+
+The two noctua-models production QC checks (disconnected individuals,
+multiply reified edges) run natively. To also run the production queries
+verbatim, fetch them and add `--sparql-dir "$R/sparql"`:
+
+```bash
 mkdir -p "$R/sparql" && for q in check-disconnected-individuals check-multiply-reified-edges; do
   curl -fsS -o "$R/sparql/$q.rq" "https://raw.githubusercontent.com/geneontology/noctua-models/master/sparql/$q.rq"; done
-uv run --quiet --script "${CLAUDE_SKILL_DIR}/scripts/gocam_qc.py" "$R/$ID.ttl" --gpad "$R/$ID.gpad" \
-    --env <production|dev> --sparql-dir "$R/sparql" --markdown "$R/qc.md" --json "$R/qc.json"
 ```
 
 `qc.md` is the dump a reviewer reads: model header (title, state, taxon,
@@ -76,10 +88,12 @@ reference with:...`), the references with the facts each supports, the
 with/from values, the terms with labels, obsolescence and GO subsets, and the
 flags by severity. Term lookups use the OLS API (cached); add `--offline`
 only without network, and say so in the report. If the header shows "Derived
-from", fetch the parent the same way and diff:
+from", fetch the parent the same way (it is written as `$R/<parent id>.ttl`)
+and diff:
 
 ```bash
-diff <(uv run --quiet --script "${CLAUDE_SKILL_DIR}/scripts/gocam_qc.py" "$R/parent.ttl" --offline --facts-only) \
+PARENT=<parent bare id>; bash "${CLAUDE_SKILL_DIR}/scripts/fetch_model.sh" "$PARENT" "$R"
+diff <(uv run --quiet --script "${CLAUDE_SKILL_DIR}/scripts/gocam_qc.py" "$R/$PARENT.ttl" --offline --facts-only) \
      <(uv run --quiet --script "${CLAUDE_SKILL_DIR}/scripts/gocam_qc.py" "$R/$ID.ttl" --offline --facts-only)
 ```
 
@@ -94,8 +108,9 @@ should become a connected GO-CAM, not whether it is broken.
   the model (receptor, TF, transporter, enzyme regulator, adaptor, complex,
   carrier, E3 ligase, ChEBI) and `Relation_selection.md` and
   `Evidence_and_evidence_codes.md`. Do not judge a pattern from memory.
-- Title and abstract for every PMID in the model (`pubmed-eutils`). Limit 20;
-  beyond that, cover the PMIDs under the facts you are about to raise.
+- Title and abstract for every PMID in the model (`pubmed-eutils`, in
+  batches); check E needs all of them. Above 50 PMIDs, ask the curator which
+  facts matter most and cover those first.
 - For every ortholog in an ISS/ISO/ISA `with` value: does the source gene have
   an experimental annotation to the same or a more specific term (`amigo`
   skill, `bioentity-annotations`)? Limit 10 lookups.
@@ -112,9 +127,10 @@ what is fine; authors need to know what passed.
 
 Full text is read for a finding you are about to rate critical or major that
 depends on figure-level detail (species of the cells, the assay, the direction
-of an effect): PMC open access, or a PDF the curator supplies. Budget 5 papers
-per review (raise it if the curator asks); a finding whose paper was not read
-is downgraded to "not verified (abstract only)", never stated as fact.
+of an effect): PMC open access, or a PDF the curator supplies. Budget: 5 papers
+per review, 10 for a model with more than ten activities, more if the curator
+asks; a finding whose paper was not read is downgraded to "not verified
+(abstract only)", never stated as fact.
 
 When a cited paper does not support a fact, offer the author a better
 reference rather than only flagging the weak one: first look for one already
@@ -143,11 +159,11 @@ since the last round or the parent, the literature caveat, the file paths, and
 the pathway-editor link from `qc.md` (never the graph editor link).
 
 Then stop. Do not re-derive the annotations, search the literature beyond the
-limits above, or propose a different model. Follow-up happens only when the curator returns
-the checklist (save it as `checklist-done.md`, answer their notes, explain any
-point they say they do not understand in plainer words) or a new version (rerun,
-keep ids, add "what changed since"). If an earlier report was wrong, say so at
-the top of the next one and withdraw the finding by id.
+limits above, or propose a different model. Follow-up happens only when the
+curator returns the checklist (save it as `checklist-done.md`, answer their
+notes, and for a disputed finding say what evidence would settle it) or a new
+version (rerun, keep ids, add "what changed since"). If an earlier report was
+wrong, say so at the top of the next one and withdraw the finding by id.
 
 ## If something fails
 
@@ -161,9 +177,22 @@ the top of the next one and withdraw the finding by id.
 
 ## Provenance
 
-The protocol, severities, check groups, literature rules and the round-based
-checklist come from skills GO curators wrote on the GO AI Hub in October 2026:
-`gocam-review` by ccasalsc and `gocam-qc` by pmasson55 and lbreuza. The
-UniProt cross-check module is ccasalsc's. The token-free fetch, the checks
-script and its tests are the hub's. Where the drafts differed, this skill
-keeps the stricter literature rule and the finer severity scale.
+From skills GO curators wrote on the GO AI Hub in October 2026. From
+`gocam-qc` (pmasson55, lbreuza): the check groups A to I, the five
+severities, the deliverables, the rounds with stable ids and a returned
+checklist, the lineage and literature-honesty rules, the dump the script now
+produces. From `gocam-review` (ccasalsc): the reading protocol (full text,
+attribution, assay level to evidence code, species, coupled reactions), the
+blocker/should-fix/suggestion items folded into the groups, the better-
+reference step, the pathway-editor link, the UniProt cross-check module. The
+token-free fetch, the checks script and its tests are the hub's.
+
+Where the drafts differed: production is the default server (the owners'
+decision for reviewing live models; the drafts defaulted to dev or read
+production from the GitHub mirror); title length is a note, not a finding
+(`gocam-review`'s author asked that it not be raised); a fact with no
+evidence, a missing enabler and a single-activity model keep `gocam-review`'s
+blocker severity. Not carried: `gocam-qc`'s HTML tick-box checklist (the
+Markdown checklist is the tracker; the HTML can follow as its authors' own
+change), duplicate-model search (needs a token), and the per-session log (a
+personal house rule).

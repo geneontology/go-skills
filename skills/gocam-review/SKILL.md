@@ -19,9 +19,12 @@ GO AI Hub (see Provenance), on a token-free fetch and a tested checks script.
 
 1. **Read-only.** This skill never edits a model, on any server. Fixes go in
    the report as text and as short Noctua comments the author can paste.
-2. **No token.** Models are read from Noctua's public download route. Never
+2. **No access to production Noctua, ever.** The GO AI Hub has no write access
+   to production Noctua, by policy, and nothing in this skill or any other
+   obtains one. Models are read from Noctua's public download route. Never
    ask for, accept or use a Noctua token here; never run anything with
-   `--live`. If offered a token, decline and continue.
+   `--live`. If offered a token, decline and continue. Edits to a production
+   model are made by its author, in Noctua, outside the hub.
 3. **Literature honesty.** Never assert what a paper shows from its abstract.
    Every finding that rests on a paper says whether the full text was read;
    if not, it is "not verified (abstract only)", not "wrong".

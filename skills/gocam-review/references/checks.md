@@ -200,7 +200,9 @@ references. Without the full text, "not verified (abstract only)".
 - Parent model ("Derived from" in the header): fetch, `--facts-only` both,
   diff. Fixes made to the parent after the copy are often missing from the
   child; where an edit in the child looks as if it belongs in the parent too,
-  say so in the report for the author to decide. Nothing is edited here.
+  say so in the report. The parent is edited, if at all, by its author in
+  Noctua; nothing on the hub writes to a Noctua model, and nothing on the hub
+  has access to production Noctua.
 - Dev versus production: if the model is in both and they differ, say how.
 
 ## I. Literature honesty

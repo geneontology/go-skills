@@ -2,3 +2,5 @@
 .DS_Store
 # A fork clone used for trying a change (CONTRIBUTING.md) gets a project skills link here.
 .claude/
+__pycache__/
+*.pyc

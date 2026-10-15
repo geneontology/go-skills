@@ -25,6 +25,21 @@ for a in "$@"; do
     esac
 done
 [ -n "$arg" ] || { sed -n '2,17p' "$0" >&2; exit 2; }
+# A file the curator supplied (a Noctua "Export OWL"/Turtle, often saved as .txt): copy it
+# under a timestamped name so the version checked is known, and stop.
+if [ -f "$arg" ]; then
+    out="${out:-$PWD}"; mkdir -p "$out"
+    base="$(basename "$arg")"; stamp="$(date +%Y%m%dT%H%M%S)"
+    if head -n 50 "$arg" | grep -qiE '^\s*(@prefix|prefix|@base|base)\b'; then
+        dst="$out/supplied-$stamp-${base%.*}.ttl"
+    else
+        echo "the file does not look like Turtle (first bytes: $(head -c 80 "$arg" | tr '\n' ' ')); OWL functional syntax and JSON are not read here" >&2; exit 1
+    fi
+    cp -- "$arg" "$dst"
+    echo "model:  supplied file $arg"
+    echo "ttl:    $dst"
+    exit 0
+fi
 # A Noctua URL names its own server; an explicit environment that disagrees is overridden, with a note.
 url_env=""
 case "$arg" in

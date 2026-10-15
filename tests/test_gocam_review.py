@@ -161,6 +161,70 @@ m:a obo:RO_0002406 m:b .
         self.assertTrue(any("queries not run" in x["message"] for x in f.by("info")))
 
 
+class EvidenceRuleTests(unittest.TestCase):
+    """The with/from, reference and recipe rules the curators' dump flagged."""
+
+    def findings(self, ttl, sev=None):
+        out, f = analyse(ttl, sparql=False)
+        return [x["message"] for x in f.items if sev is None or x["severity"] == sev]
+
+    def test_with_required_and_forbidden(self):
+        ttl = PREFIXES + """
+m:ev2 a owl:NamedIndividual, obo:ECO_0000305 ; dc:source "PMID:2" .
+m:ev3 a owl:NamedIndividual, obo:ECO_0000314 ; dc:source "PMID:3" ; lego:evidence-with "UniProtKB:P1" .
+m:a obo:RO_0002629 m:b .
+[ a owl:Axiom ; owl:annotatedSource m:a ; owl:annotatedProperty obo:RO_0002629 ; owl:annotatedTarget m:b ; lego:evidence m:ev2 , m:ev3 ] .
+"""
+        w = " | ".join(self.findings(ttl, "warning"))
+        self.assertIn("IC with no with/from", w)
+        self.assertIn("IDA and carries with/from", w)
+
+    def test_circular_with_and_recipe_and_reference_form(self):
+        ttl = PREFIXES + """
+m:bp a owl:NamedIndividual, obo:GO_0007155 .
+m:evc a owl:NamedIndividual, obo:ECO_0000305 ; dc:source "PMID:4" ; lego:evidence-with "GO:0007155" .
+m:evr a owl:NamedIndividual, obo:ECO_0000314 ; dc:source "GO_REF:0000024" .
+m:evm a owl:NamedIndividual, obo:ECO_0000315 ; dc:source "pmid 12345" .
+m:a obo:BFO_0000050 m:bp .
+[ a owl:Axiom ; owl:annotatedSource m:a ; owl:annotatedProperty obo:BFO_0000050 ; owl:annotatedTarget m:bp ; lego:evidence m:evc , m:evr , m:evm ] .
+"""
+        msgs = " | ".join(self.findings(ttl))
+        self.assertIn("circular with/from", msgs)
+        self.assertIn("recipe mismatch", msgs)
+        self.assertIn("not in a recognised form", msgs)
+
+    def test_species_mismatch_and_taxon(self):
+        ttl = PREFIXES.replace('pav:providedBy "http://geneontology.org" .', 'pav:providedBy "http://geneontology.org" ; <https://w3id.org/biolink/vocab/in_taxon> obo:NCBITaxon_9606 .')
+        msgs = " | ".join(self.findings(ttl))
+        self.assertIn("MGI:MGI:97490 (MGI) implies NCBITaxon:10090", msgs)
+        self.assertNotIn("model has no taxon", msgs)
+        self.assertIn("model has no taxon", " | ".join(self.findings(PREFIXES)))
+
+    def test_facts_only_strips_handles(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "m.ttl"; p.write_text(PREFIXES + "m:a obo:RO_0002629 m:b .\n")
+            r = subprocess.run([sys.executable, str(QC), str(p), "--offline", "--facts-only"], capture_output=True, text=True)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("GO:0003674 --directly positively regulates--> GO:0003674 ::", r.stdout)
+            self.assertNotIn("m:a", r.stdout)
+
+
+class SuppliedFileTests(unittest.TestCase):
+    def test_a_turtle_file_is_copied_under_a_stamped_name(self):
+        with tempfile.TemporaryDirectory() as d:
+            r = subprocess.run(["bash", str(FETCH), str(TTL), d], capture_output=True, text=True)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("supplied file", r.stdout)
+            self.assertTrue(list(Path(d).glob("supplied-*-ZFIN_ZDB-GENE-991207-22.ttl")))
+
+    def test_a_non_turtle_file_is_refused(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "x.txt"; p.write_text("Ontology(<x>)")
+            r = subprocess.run(["bash", str(FETCH), str(p), d], capture_output=True, text=True)
+            self.assertEqual(r.returncode, 1)
+            self.assertIn("does not look like Turtle", r.stderr)
+
+
 class QcTests(unittest.TestCase):
     def run_qc(self, *args):
         return subprocess.run([sys.executable, str(QC), *args], capture_output=True, text=True)

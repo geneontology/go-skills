@@ -91,6 +91,28 @@ OBSOLETE_REL = {"RO:0002406": "RO:0002629", "RO:0002408": "RO:0002630"}
 CONTEXT = {k for k in REL if k not in CAUSAL and k not in PROCESS and k not in REGULATOR}
 ONTOLOGY_PREFIXES = ("GO", "RO", "ECO", "CHEBI", "CL", "UBERON", "PO", "BFO", "SO", "PR")
 MF_ROOT = "GO:0003674"
+BIOLINK_TAXON = URIRef("https://w3id.org/biolink/vocab/in_taxon")
+PROV_DERIVED = URIRef("http://www.w3.org/ns/prov#wasDerivedFrom")
+
+# GO evidence codes (ECO -> GO code), and the with/from rules curators apply:
+# codes that need a with value, and codes that must not carry one.
+ECO_CODE = {
+    "ECO:0000269": "EXP", "ECO:0000314": "IDA", "ECO:0000315": "IMP", "ECO:0000316": "IGI", "ECO:0000353": "IPI",
+    "ECO:0000270": "IEP", "ECO:0000305": "IC", "ECO:0000250": "ISS", "ECO:0000266": "ISO", "ECO:0000247": "ISA",
+    "ECO:0000255": "ISM", "ECO:0000318": "IBA", "ECO:0000320": "IKR", "ECO:0000321": "IRD", "ECO:0000317": "IGC",
+    "ECO:0000245": "RCA", "ECO:0000304": "TAS", "ECO:0000303": "NAS", "ECO:0000307": "ND", "ECO:0000501": "IEA",
+    "ECO:0007005": "HDA", "ECO:0007001": "HMP", "ECO:0007003": "HGI", "ECO:0007007": "HEP", "ECO:0006056": "HTP",
+}
+WITH_REQUIRED = {"IC", "IPI", "IGI", "ISS", "ISO", "ISA", "ISM", "IBA", "IKR", "IRD"}
+WITH_FORBIDDEN = {"IDA", "IEP", "TAS", "NAS", "ND"}
+SIMILARITY = {"ISS", "ISO", "ISA", "ISM"}
+GOREF_CODES = {"GO_REF:0000024": SIMILARITY, "GO_REF:0000033": {"IBA"}, "GO_REF:0000015": {"ND"},
+               "GO_REF:0000002": {"IEA"}, "GO_REF:0000003": {"IEA"}, "GO_REF:0000004": {"IEA"}, "GO_REF:0000107": {"IEA"}}
+REF_RE = re.compile(r"^(PMID:\d+|GO_REF:\d{7}|DOI:10\.\S+|doi:10\.\S+|Reactome:R-[A-Z]{3}-\d+|ISBN:[0-9Xx-]+|[A-Z][A-Za-z]+:[A-Za-z0-9._-]+)$")
+# A MOD prefix implies a species; a mismatch with the model's taxon is worth a look.
+MOD_TAXON = {"ZFIN": "NCBITaxon:7955", "MGI": "NCBITaxon:10090", "RGD": "NCBITaxon:10116", "FB": "NCBITaxon:7227",
+             "WB": "NCBITaxon:6239", "SGD": "NCBITaxon:559292", "PomBase": "NCBITaxon:4896", "TAIR": "NCBITaxon:3702",
+             "dictyBase": "NCBITaxon:44689", "Xenbase": "NCBITaxon:8355"}
 
 
 IDORG = "http://identifiers.org/"
@@ -216,8 +238,17 @@ def analyse(g: Graph, terms: Terms, f: Findings, sparql_dir: Path | None) -> dic
         "contributors": sorted({str(o) for o in g.objects(model, DC.contributor)}) if model else [],
         "providers": sorted({str(o) for o in g.objects(model, PAV.providedBy)}) if model else [],
         "dates": sorted({str(o) for o in g.objects(model, DC.date)}) if model else [],
+        "taxon": sorted({curie(o) for o in g.objects(model, BIOLINK_TAXON)}) if model else [],
+        "comments": sorted({str(o) for o in g.objects(model, RDFS.comment)}) if model else [],
+        "derived_from": sorted({str(o) for o in g.objects(model, PROV_DERIVED)}) if model else [],
     }
     out["model"] = header
+    if not header["taxon"]:
+        f.add("minor", "hygiene", "model has no taxon (in_taxon)")
+    if len(header["title"]) > 120:
+        f.add("note", "hygiene", f"title is {len(header['title'])} characters (not raised as a finding; say so only if the title is a placeholder or a PMID)")
+    for c in header["comments"]:
+        f.add("note", "hygiene", f"model comment to read: {c[:160]}")
     if not header["state"]:
         f.add("warning", "header", "model has no lego:modelstate")
     if not header["title"]:
@@ -270,11 +301,27 @@ def analyse(g: Graph, terms: Terms, f: Findings, sparql_dir: Path | None) -> dic
         ev_types = [t for t in types.get(e, []) if t.startswith("ECO:")]
         sources = sorted({str(x) for x in g.objects(e, DC.source)})
         withs = sorted({str(x) for x in g.objects(e, LEGO["evidence-with"])})
-        evidence[e] = {"eco": ev_types[0] if ev_types else None, "eco_all": ev_types, "sources": sources, "with": withs}
+        code = ECO_CODE.get(ev_types[0]) if ev_types else None
+        evidence[e] = {"eco": ev_types[0] if ev_types else None, "eco_all": ev_types, "code": code, "sources": sources, "with": withs}
         if not ev_types:
             f.add("error", "evidence", f"evidence individual {short(e)} has no ECO class")
         elif len(ev_types) > 1:
             f.add("warning", "evidence", f"evidence individual {short(e)} carries {len(ev_types)} ECO classes: {', '.join(ev_types)}")
+        for src in sources:
+            if not REF_RE.match(src):
+                f.add("minor", "evidence", f"evidence {short(e)}: reference '{src}' is not in a recognised form (PMID:n, GO_REF:nnnnnnn, DOI:...)")
+            elif src.upper().startswith("DOI:"):
+                f.add("minor", "evidence", f"evidence {short(e)} cites a bare DOI ({src}); a PMID is preferred when one exists")
+        if len(sources) > 1:
+            f.add("minor", "evidence", f"evidence {short(e)} carries {len(sources)} references on one evidence line")
+        if code in WITH_REQUIRED and not withs:
+            f.add("warning", "with", f"evidence {short(e)} is {code} with no with/from value ({code} needs one)")
+        if code in WITH_FORBIDDEN and withs:
+            f.add("warning", "with", f"evidence {short(e)} is {code} and carries with/from {withs}; {code} takes none (a colocalisation or inference mis-coded as a direct assay?)")
+        for src in sources:
+            allowed = GOREF_CODES.get(src)
+            if allowed and code and code not in allowed:
+                f.add("warning", "with", f"evidence {short(e)}: {src} is the reference for {'/'.join(sorted(allowed))}, not {code} (recipe mismatch)")
         if not sources:
             f.add("warning", "evidence", f"evidence {short(e)} ({ev_types[0] if ev_types else '?'}) cites no source (dc:source)")
     out["evidence_count"] = len(evidence)
@@ -452,6 +499,48 @@ def analyse(g: Graph, terms: Terms, f: Findings, sparql_dir: Path | None) -> dic
         f.add("warning", "terms", f"{len(terms.errors)} OLS lookup(s) failed; those terms were NOT checked for existence, obsolescence or subsets")
         for e in terms.errors[:5]:
             f.add("warning", "terms", f"OLS lookup failed: {e}")
+    # --- per-fact evidence lines (the dump curators read), circular with, indexes
+    fact_lines = []
+    ref_index = defaultdict(list)
+    with_values = defaultdict(list)
+    for fa in facts:
+        s_types = types.get(fa["s"], []); o_types = types.get(fa["o"], [])
+        rel = REL.get(fa["p"], fa["p"])
+        evs = []
+        for e in fa["evidence"]:
+            ev = evidence.get(e, {})
+            evs.append(f"{ev.get('code') or ev.get('eco') or '?'} {' '.join(ev.get('sources', [])) or 'no-ref'}" + (f" with:{','.join(ev['with'])}" if ev.get("with") else ""))
+            for src in ev.get("sources", []):
+                ref_index[src].append(f"{short(fa['s'])} {rel} {short(fa['o'])}")
+            for w in ev.get("with", []):
+                with_values[w].append(f"{short(fa['s'])} {rel} {short(fa['o'])} ({ev.get('code')})")
+                # circular with: the value is the term being supported, the subject's own type, or the subject's enabler
+                enablers = {curie(x) for x in enabled.get(fa["s"], [])}
+                if w in o_types or w in s_types or w in enablers:
+                    f.add("warning", "with", f"circular with/from on {short(fa['s'])} {rel} {short(fa['o'])}: {w} is the term or gene the fact itself concerns")
+        fact_lines.append({"s": short(fa["s"]), "s_types": s_types, "rel": rel, "p": fa["p"], "o": short(fa["o"]), "o_types": o_types,
+                           "evidence": evs, "contributors": fa["contributors"], "dates": fa["dates"]})
+    out["facts"] = fact_lines
+    out["references"] = {k: v for k, v in sorted(ref_index.items())}
+    out["with_values"] = {k: v for k, v in sorted(with_values.items())}
+    # IEP belongs on biological processes only
+    for fa in facts:
+        for e in fa["evidence"]:
+            if evidence.get(e, {}).get("code") == "IEP":
+                o_ns = [info(t).get("namespace") for t in types.get(fa["o"], [])]
+                if o_ns and "biological_process" not in o_ns and fa["p"] not in ("BFO:0000050",):
+                    f.add("warning", "with", f"IEP on {short(fa['s'])} {REL.get(fa['p'], fa['p'])} {short(fa['o'])}: expression evidence supports a process, not this")
+    # species of the entities vs the model taxon (MOD prefixes only; UniProtKB needs a lookup)
+    model_taxa = set(header["taxon"])
+    if model_taxa:
+        for i in inds:
+            for t in types.get(i, []):
+                pfx = t.split(":")[0]
+                implied = MOD_TAXON.get(pfx)
+                if implied and implied not in model_taxa:
+                    f.add("warning", "species", f"{t} ({pfx}) implies {implied}; the model's taxon is {', '.join(sorted(model_taxa))} (host-pathogen models excepted)")
+    if len(activities) == 1:
+        f.add("note", "structure", "single-activity model: GO expects a GO-CAM to place the activity in a multi-activity flow")
     # evidence summary
     eco_counts = defaultdict(int)
     src_counts = defaultdict(int)
@@ -493,8 +582,11 @@ def markdown(out: dict, f: Findings, gpad: dict | None, src: Path, env: str) -> 
     L.append(f"Source: `{src.name}`, read {dt.date.today().isoformat()}. This is a read-only check; nothing was changed.")
     L.append("")
     L.append("## Model")
-    L.append(f"- Noctua ({env}): {HOSTS.get(env, HOSTS['production'])}/editor/graph/gomodel:{m['id']}")
+    L.append(f"- Noctua ({env}): {HOSTS.get(env, HOSTS['production'])}/workbench/noctua-visual-pathway-editor/?model_id=gomodel:{m['id']}")
     L.append(f"- Title: {m['title'] or '(none)'}")
+    L.append(f"- Taxon: {', '.join(m['taxon']) or '(none)'}")
+    if m["derived_from"]:
+        L.append(f"- Derived from: {', '.join(m['derived_from'])}")
     L.append(f"- State: {m['state'] or '(none)'}")
     L.append(f"- Contributors: {', '.join(m['contributors']) or '(none)'}")
     L.append(f"- Provided by: {', '.join(m['providers']) or '(none)'}")
@@ -504,9 +596,9 @@ def markdown(out: dict, f: Findings, gpad: dict | None, src: Path, env: str) -> 
         L.append(f"- GPAD export: {gpad['rows']} rows, model-state {', '.join(gpad['model_states']) or '?'}, NOT qualifiers {gpad['not_qualifiers']}")
     L.append("")
     L.append("## Findings")
-    for sev in ("error", "warning", "info"):
+    for sev in ("error", "warning", "minor", "note", "info"):
         items = f.by(sev)
-        L.append(f"### {sev}s ({len(items)})")
+        L.append(f"### {sev} ({len(items)})")
         for it in items:
             L.append(f"- [{it['check']}] {it['message']}")
         L.append("")
@@ -543,6 +635,27 @@ def markdown(out: dict, f: Findings, gpad: dict | None, src: Path, env: str) -> 
     L.append(f"- Evidence with no source: {out['evidence_without_source']}")
     L.append(f"- Sources: {out['sources']}")
     L.append("")
+    L.append("## Facts (what each edge rests on)")
+    L.append("")
+    L.append("One line per fact: subject, relation, object, then each evidence line as `CODE reference [with:...]`.")
+    L.append("")
+    for fl in out["facts"]:
+        L.append(f"- `{fl['s']}` {' '.join(fl['s_types'])} **{fl['rel']}** `{fl['o']}` {' '.join(fl['o_types'])} :: {'; '.join(fl['evidence']) or 'NO EVIDENCE'}")
+    L.append("")
+    L.append("## References, and the facts each supports")
+    L.append("")
+    for ref, fs in out["references"].items():
+        L.append(f"- {ref}: {len(fs)} fact(s): {'; '.join(fs)}")
+    if not out["references"]:
+        L.append("(none)")
+    L.append("")
+    L.append("## with/from values")
+    L.append("")
+    for w, fs in out["with_values"].items():
+        L.append(f"- {w}: {'; '.join(fs)}")
+    if not out["with_values"]:
+        L.append("(none)")
+    L.append("")
     L.append("## Terms used")
     L.append("")
     L.append("| term | label | namespace | obsolete | subsets |")
@@ -562,6 +675,7 @@ def main(argv=None) -> int:
     ap.add_argument("--json", type=Path, help="write the machine-readable result here")
     ap.add_argument("--markdown", type=Path, help="write the report here (default: stdout)")
     ap.add_argument("--env", choices=("production", "dev"), default="production", help="which Noctua the file came from (for the link in the report)")
+    ap.add_argument("--facts-only", action="store_true", help="print one sorted line per fact without node handles, for diffing two versions or a parent model")
     a = ap.parse_args(argv)
     if not a.ttl.is_file():
         print(f"no such file: {a.ttl}", file=sys.stderr); return 2
@@ -576,6 +690,10 @@ def main(argv=None) -> int:
     gpad = read_gpad(a.gpad, f) if a.gpad and a.gpad.is_file() else None
     out["gpad"] = gpad
     out["findings"] = f.items
+    if a.facts_only:
+        lines = sorted(f"{' '.join(fl['s_types'])} --{fl['rel']}--> {' '.join(fl['o_types'])} :: {'; '.join(sorted(fl['evidence']))}" for fl in out["facts"])
+        print("\n".join(lines))
+        return 0
     report = markdown(out, f, gpad, a.ttl, a.env)
     if a.json:
         def default(o):
@@ -583,7 +701,7 @@ def main(argv=None) -> int:
         a.json.write_text(json.dumps(out, indent=1, default=default))
     if a.markdown:
         a.markdown.write_text(report)
-        print(f"report: {a.markdown}  (errors {len(f.by('error'))}, warnings {len(f.by('warning'))}, info {len(f.by('info'))})")
+        print(f"report: {a.markdown}  (errors {len(f.by('error'))}, warnings {len(f.by('warning'))}, minor {len(f.by('minor'))}, notes {len(f.by('note'))}, info {len(f.by('info'))})")
     else:
         print(report)
     return 0

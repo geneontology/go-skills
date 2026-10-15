@@ -86,7 +86,7 @@ it will not end up in your pull request.
 ### What happens next
 
 Automated checks run on the pull request: the skill validator and the tests. A
-go-skills maintainer (see `CODEOWNERS`) reviews and merges. A merge is live for
+go-skills maintainer reviews and merges. A merge is live for
 every curator within minutes, so unfinished work stays a draft pull request.
 
 ## 3. A new skill

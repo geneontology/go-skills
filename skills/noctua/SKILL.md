@@ -104,6 +104,17 @@ The token is stored in the user's own `~/.env` (mode `0600`); ordinary unix
 permissions on the box are the protection, which is proportionate for a dev
 server.
 
+### The dev server's API namespace is `minerva_public_dev`
+
+The `noctua barista` CLI already addresses the right server and namespace;
+prefer it over hand-written HTTP calls. When a raw call is unavoidable (the
+`/save-to-drop-box` skill shows the sanctioned form), the path is
+`http://barista-dev.berkeleybop.org/api/minerva_public_dev/...`.
+`minerva_public_dev` is the dev server's API namespace for curator tooling.
+`minerva_public` is production's namespace and does not exist on
+noctua-dev; do not substitute it, and do not copy namespace names from
+production URLs or examples.
+
 ## Read Access
 
 To dump a model in minerva JSON:

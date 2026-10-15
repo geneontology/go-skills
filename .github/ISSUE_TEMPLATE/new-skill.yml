@@ -1,0 +1,51 @@
+name: New skill proposal
+description: A curation task the skills do not cover yet.
+title: "[new skill] <proposed name>: <one line>"
+labels: ["new-skill"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Agree the name and scope here before the pull request. A skill you already wrote for yourself on the hub is a fine starting point: say so, and the pull request can start from it.
+  - type: input
+    id: name
+    attributes:
+      label: Proposed name
+      description: Lowercase with hyphens; it becomes the directory under `skills/`.
+    validations:
+      required: true
+  - type: textarea
+    id: trigger
+    attributes:
+      label: When it should trigger
+      description: The requests or situations that should bring this skill in, in the curator's words.
+    validations:
+      required: true
+  - type: textarea
+    id: does
+    attributes:
+      label: What it does
+      description: The steps, and what the curator gets at the end.
+    validations:
+      required: true
+  - type: input
+    id: drives
+    attributes:
+      label: Tool or data source it drives
+      description: e.g. noctua-py, the AmiGO API, UniProt REST, a repository. Optional.
+  - type: textarea
+    id: overlap
+    attributes:
+      label: Overlap with existing skills
+      description: Which existing skill comes closest, and why it is not enough. Optional.
+  - type: input
+    id: draft
+    attributes:
+      label: Existing draft
+      description: Optional. Where a draft lives (a fork branch, or `~/.claude/skills/<name>` on the hub).
+  - type: checkboxes
+    id: agent
+    attributes:
+      label: Authorship
+      options:
+        - label: This issue was drafted by an agent on behalf of the curator named as its author.

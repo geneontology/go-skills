@@ -67,7 +67,10 @@ frontmatter, not the quality of the instructions.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md): edit on GitHub in the browser, or from a
-GO AI Hub session in your `~/go-skills` checkout, then open a pull request. Keep a
-`SKILL.md` under 500 lines; move detail into `references/`. Skills should work
-from a fresh home directory with no credentials.
+See [CONTRIBUTING.md](CONTRIBUTING.md): file an issue with one of the forms (skill
+correction, new skill proposal, documentation), or open a pull request from a fork,
+in the browser or from a GO AI Hub session. On the hub, the skills in each
+curator's `~/.claude/skills` are read-only links to this repository's `main`; a
+merge reaches every curator within minutes.
+Keep a `SKILL.md` under 500 lines; move detail into `references/`. Skills should
+work from a fresh home directory with no credentials.

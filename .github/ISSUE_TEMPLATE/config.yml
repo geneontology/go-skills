@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: A problem with the GO AI Hub itself (login, sessions, files, how skills arrive)
+    url: https://github.com/geneontology/go-jupyter/issues/new
+    about: The hub is geneontology/go-jupyter; skills are here.
+  - name: An ontology editing skill (chemical-entity, design-pattern, mapping, ...)
+    url: https://github.com/geneontology/go-ontology/issues/new
+    about: Those skills live in geneontology/go-ontology.

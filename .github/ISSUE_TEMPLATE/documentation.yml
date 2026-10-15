@@ -1,0 +1,38 @@
+name: Documentation
+description: A reference document a skill relies on is wrong or missing something.
+title: "[docs] <document>: <one line>"
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For the GO-CAM guidance carried in this repository (`skills/gocam-best-practice/references/`). For a document that lives elsewhere, see "Where the documentation lives" in CONTRIBUTING.md and file it there; use this form if you are not sure where it belongs.
+  - type: input
+    id: document
+    attributes:
+      label: Document
+      description: File path in this repository, or the document's name and link.
+    validations:
+      required: true
+  - type: textarea
+    id: wrong
+    attributes:
+      label: What is wrong or missing
+    validations:
+      required: true
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed text
+      description: Optional. If you have the wording, put it here; a pull request can follow.
+  - type: input
+    id: session
+    attributes:
+      label: Session or trace reference
+      description: Optional.
+  - type: checkboxes
+    id: agent
+    attributes:
+      label: Authorship
+      options:
+        - label: This issue was drafted by an agent on behalf of the curator named as its author.

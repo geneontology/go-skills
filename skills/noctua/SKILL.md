@@ -198,6 +198,27 @@ the curator's call and travels as set.
 - **Export both files back to back** from the stored state (`/save-to-drop-box`,
   step 3). Any later edit means store + re-export both again.
 
+### Raw minerva requests: only when `barista` has no command for it
+
+The `barista` commands take the model id as an argument and are the first
+choice. When an operation has no command (changing an individual's class, for
+example) and you post to `m3BatchPrivileged` yourself:
+
+- Pass the JSON inline, `--data-urlencode 'requests=[...]'`, as the store and
+  export commands in `/save-to-drop-box` do. If it must come from a file,
+  create that file with `mktemp`, never a fixed path such as `/tmp/req.json`:
+  the hub is one machine shared by every curator, and on 2026-10-14 a stale
+  file of that name, left by one curator, was posted by another curator's
+  session with their token, which put their name on a model they never touched.
+- Stop at the first failed step: `set -euo pipefail`, and `&&` between writing
+  the file and the curl that reads it.
+- Print the payload before sending it and check that every `model-id` in it is
+  the model the curator is working on. The dev server accepts any valid token
+  for any model, so "don't edit models you didn't create" is yours to enforce.
+- Read the model back afterwards (`barista get-model`) and confirm the change
+  you meant is there; a `success` reply only says the server accepted what it
+  received.
+
 ### Evidence hygiene
 
 When you remove evidence from an edge (`remove-annotation` of an `evidence`

@@ -32,12 +32,12 @@ body:
     id: drives
     attributes:
       label: Tool or data source it drives
-      description: e.g. noctua-py, the AmiGO API, UniProt REST, a repository.
+      description: e.g. noctua-py, the AmiGO API, UniProt REST, a repository. Optional.
   - type: textarea
     id: overlap
     attributes:
       label: Overlap with existing skills
-      description: Which existing skill comes closest, and why it is not enough.
+      description: Which existing skill comes closest, and why it is not enough. Optional.
   - type: input
     id: draft
     attributes:

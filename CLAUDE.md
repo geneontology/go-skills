@@ -17,7 +17,7 @@ Rules:
 - Keep `SKILL.md` under 500 lines. Detail goes in `references/`.
 - Test a change with `npx skills add ./ --skill <name> -l` (discovery) and by running
   any script under a scratch `$HOME`-like location before opening a PR.
-- The GO AI hub (geneontology/go-jupyter) links every curator's `~/.claude/skills`
-  to a read-only checkout of `main`, refreshed within minutes of a merge. Do not
-  merge half-finished skills, and do not write into the skill directory from a
-  script: on the hub it is not writable.
+- The GO AI hub (geneontology/go-jupyter) places read-only links to a checkout of
+  `main` in every curator's `~/.claude/skills`, refreshed within minutes of a
+  merge. Do not merge half-finished skills, and do not write into the skill
+  directory from a script: on the hub it is not writable.

@@ -32,40 +32,45 @@ Ground rules, in order of importance:
 ## Step 1: identify the model and the environment
 
 Accept any of: `gomodel:ZFIN_ZDB-GENE-991207-22`, a bare id, or a Noctua URL
-(editor, form, or download link). Production is the default. Use `--dev`
-(noctua-dev) only when the curator says the model is a development model or
-gives a noctua-dev URL. If the id is ambiguous, ask once.
+(editor, form, or download link). Production is the default. A noctua-dev URL
+selects noctua-dev by itself; for a bare id of a development model add `dev`.
+If the id is ambiguous, ask once.
 
-Make a working directory for this review:
+Work with the bare id (no `gomodel:` prefix) in paths:
 
 ```bash
-R=~/reviews/$(date +%Y-%m-%d)-<id without gomodel:>; mkdir -p "$R"
+ID=<bare id, e.g. ZFIN_ZDB-GENE-991207-22>
+R=~/reviews/$(date +%Y-%m-%d)-$ID; mkdir -p "$R"
 ```
 
 ## Step 2: fetch the model
 
 ```bash
-bash "${CLAUDE_SKILL_DIR}/scripts/fetch_model.sh" "<id or URL>" production "$R"
-# or: ... "<id or URL>" dev "$R"
+bash "${CLAUDE_SKILL_DIR}/scripts/fetch_model.sh" "<id or URL>" "$R"        # production, or the URL's server
+bash "${CLAUDE_SKILL_DIR}/scripts/fetch_model.sh" "<id>" "$R" dev           # a development model by bare id
 ```
 
-This downloads `<id>.ttl` (Noctua's `/download/<id>/owl` route; the body is
-Turtle) and `<id>.gpad` over plain HTTP, with no credential. A 400 from Noctua
-means the id does not exist there; check the environment and the id before
-anything else.
+This downloads `$R/$ID.ttl` (Noctua's `/download/<id>/owl` route; the body is
+Turtle) and `$R/$ID.gpad` over plain HTTP, with no credential, and prints the
+exact paths and the environment it used; use those in the next step. "no
+model" with HTTP 400 means the id does not exist on that server; "could not
+reach" is a network problem, not a missing model.
 
 ## Step 3: run the structural checks
 
 ```bash
-uv run --quiet --script "${CLAUDE_SKILL_DIR}/scripts/gocam_qc.py" "$R/<id>.ttl" \
-    --gpad "$R/<id>.gpad" --markdown "$R/qc.md" --json "$R/qc.json"
+uv run --quiet --script "${CLAUDE_SKILL_DIR}/scripts/gocam_qc.py" "$R/$ID.ttl" \
+    --gpad "$R/$ID.gpad" --env production --markdown "$R/qc.md" --json "$R/qc.json"
 ```
 
-Takes a few seconds (longer the first time: term labels come from the OLS
-API and are cached under `~/.cache/gocam-review/`). With no network, add
-`--offline`; the report then says that terms were not checked. To include
-the noctua-models QC queries exactly as production runs them, fetch them
-first and pass the directory:
+(`--env dev` for a development model: it only sets the Noctua link in the
+report.) Takes a few seconds, longer the first time: term labels come from
+the OLS API and are cached under `~/.cache/gocam-review/`. With no network,
+add `--offline`; the report then says that terms were not checked, and that
+an activity typed with a specific molecular-function term but no enabler
+cannot be recognised as an activity offline. Prefer the online run. To
+include the noctua-models QC queries exactly as production runs them, fetch
+them first and pass the directory:
 
 ```bash
 mkdir -p "$R/sparql" && for q in check-disconnected-individuals check-multiply-reified-edges; do
@@ -126,7 +131,9 @@ path and give a three-line summary in the conversation:
 
 ```markdown
 # Review of gomodel:<id>  (<title>)
-Reviewed <date> by Claude (automated checks + reading), read-only. Model state: <state>. Contributors: <...>.
+Noctua: <editor URL from qc.md> (<production|dev>). Model state: <state>.
+Contributors: <...>. Curating group: <providedBy>. Organism(s): <as inferred from the enablers' identifiers, or "not determinable from the model">.
+Reviewed <date> by Claude (automated checks + reading), read-only.
 
 ## Summary
 Two to five sentences: what the model represents, the most important findings, and whether anything blocks production use.

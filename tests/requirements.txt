@@ -4,3 +4,4 @@ skills-ref @ git+https://github.com/agentskills/agentskills.git@69ef37e9424c0a7e
 
 # gocam-review: its QC script parses Turtle; the test runs it offline.
 rdflib>=7.0
+requests>=2.31

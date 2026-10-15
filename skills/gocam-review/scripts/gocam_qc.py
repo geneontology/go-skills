@@ -51,41 +51,44 @@ PAV = Namespace("http://purl.org/pav/")
 OBO = "http://purl.obolibrary.org/obo/"
 GOMODEL = "http://model.geneontology.org/"
 
-REL = {  # predicate CURIE -> label
-    "RO:0002333": "enabled by",
-    "BFO:0000050": "part of",
-    "BFO:0000066": "occurs in",
-    "RO:0002233": "has input",
-    "RO:0002234": "has output",
-    "RO:0001025": "located in",
-    "RO:0002092": "happens during",
-    "BFO:0000051": "has part",
-    "RO:0002473": "composed primarily of",
-    "RO:0002411": "causally upstream of",
-    "RO:0002412": "immediately causally upstream of",
+# Relations, labelled from RO (ro.obo as of 2026-10-14). Four classes:
+#   CAUSAL   activity -> activity edges (the causal graph)
+#   PROCESS  activity or gene product -> process (the legacy annotation form)
+#   REGULATOR molecule -> activity (small-molecule activator/inhibitor)
+#   CONTEXT  everything that hangs context off an activity or process
+REL = {
+    "RO:0002411": "causally upstream of", "RO:0002412": "immediately causally upstream of",
+    "RO:0012011": "indirectly causally upstream of", "RO:0012009": "constitutively upstream of",
     "RO:0002418": "causally upstream of or within",
-    "RO:0004046": "causally upstream of or within, negative effect",
-    "RO:0004047": "causally upstream of or within, positive effect",
-    "RO:0002304": "causally upstream of, positive effect",
-    "RO:0002305": "causally upstream of, negative effect",
-    "RO:0002629": "directly positively regulates",
-    "RO:0002630": "directly negatively regulates",
-    "RO:0002578": "directly regulates",
-    "RO:0002211": "regulates",
-    "RO:0002212": "negatively regulates",
-    "RO:0002213": "positively regulates",
-    "RO:0012010": "indirectly regulates",
-    "RO:0012011": "indirectly positively regulates",
-    "RO:0012012": "indirectly negatively regulates",
-    "RO:0002413": "provides input for",
-    "RO:0002414": "transitively provides input for",
-    "RO:0002406": "directly activates (deprecated)",
-    "RO:0002407": "directly inhibits (deprecated)",
+    "RO:0004046": "causally upstream of or within, negative effect", "RO:0004047": "causally upstream of or within, positive effect",
+    "RO:0002304": "causally upstream of, positive effect", "RO:0002305": "causally upstream of, negative effect",
+    "RO:0002629": "directly positively regulates", "RO:0002630": "directly negatively regulates", "RO:0002578": "directly regulates",
+    "RO:0002211": "regulates", "RO:0002212": "negatively regulates", "RO:0002213": "positively regulates",
+    "RO:0012012": "indirectly regulates", "RO:0002407": "indirectly positively regulates", "RO:0002409": "indirectly negatively regulates",
+    "RO:0002413": "provides input for", "RO:0002414": "transitively provides input for", "RO:0012010": "removes input for",
     "RO:0002410": "causally related to",
+    "RO:0002406": "obsolete directly activates", "RO:0002408": "obsolete directly inhibits",
+    "RO:0002263": "acts upstream of", "RO:0002264": "acts upstream of or within",
+    "RO:0004034": "acts upstream of, positive effect", "RO:0004035": "acts upstream of, negative effect",
+    "RO:0004032": "acts upstream of or within, positive effect", "RO:0004033": "acts upstream of or within, negative effect",
+    "RO:0012005": "is small molecule activator of", "RO:0012006": "is small molecule inhibitor of",
+    "RO:0002333": "enabled by", "RO:0002327": "enables",
+    "BFO:0000050": "part of", "BFO:0000066": "occurs in", "BFO:0000051": "has part",
+    "RO:0002233": "has input", "RO:0002234": "has output", "RO:0004009": "has primary input", "RO:0004008": "has primary output",
+    "RO:0001025": "located in", "RO:0002092": "happens during", "RO:0002490": "existence overlaps", "RO:0002491": "existence starts and ends during",
+    "RO:0002473": "composed primarily of", "RO:0002331": "involved in",
+    "RO:0002296": "results in development of", "RO:0002297": "results in formation of anatomical entity", "RO:0002298": "results in morphogenesis of",
+    "RO:0002299": "results in maturation of", "RO:0002313": "transports or maintains localization of", "RO:0002338": "has target start location",
+    "RO:0002339": "has target end location", "RO:0002340": "imports", "RO:0002345": "exports", "RO:0002565": "results in movement of",
+    "RO:0002588": "results in assembly of", "RO:0002590": "results in disassembly of", "RO:0002592": "results in organization of",
 }
-CAUSAL = {k for k in REL if k.startswith("RO:00024") or k.startswith("RO:00026") or k.startswith("RO:00022") or k.startswith("RO:00023") or k.startswith("RO:00040") or k.startswith("RO:00120") or k in ("RO:0002578",)}
-CAUSAL -= {"RO:0002333", "RO:0002233", "RO:0002234", "RO:0002473"}
-CONTEXT = {"RO:0002333", "BFO:0000050", "BFO:0000066", "RO:0002233", "RO:0002234", "RO:0001025", "RO:0002092", "BFO:0000051", "RO:0002473"}
+CAUSAL = {"RO:0002411", "RO:0002412", "RO:0012011", "RO:0012009", "RO:0002418", "RO:0004046", "RO:0004047", "RO:0002304", "RO:0002305",
+          "RO:0002629", "RO:0002630", "RO:0002578", "RO:0002211", "RO:0002212", "RO:0002213", "RO:0012012", "RO:0002407", "RO:0002409",
+          "RO:0002413", "RO:0002414", "RO:0012010", "RO:0002410", "RO:0002406", "RO:0002408"}
+PROCESS = {"RO:0002263", "RO:0002264", "RO:0004034", "RO:0004035", "RO:0004032", "RO:0004033"}
+REGULATOR = {"RO:0012005", "RO:0012006"}
+OBSOLETE_REL = {"RO:0002406": "RO:0002629", "RO:0002408": "RO:0002630"}
+CONTEXT = {k for k in REL if k not in CAUSAL and k not in PROCESS and k not in REGULATOR}
 ONTOLOGY_PREFIXES = ("GO", "RO", "ECO", "CHEBI", "CL", "UBERON", "PO", "BFO", "SO", "PR")
 MF_ROOT = "GO:0003674"
 
@@ -107,8 +110,6 @@ def curie(iri) -> str:
         rest = s[len(IDORG):]
         if "/" in rest:
             pfx, local = rest.split("/", 1)
-            if ":" in local and local.split(":", 1)[0].lower() == pfx.lower():
-                local = local.split(":", 1)[1]
             return f"{IDORG_PREFIX.get(pfx.lower(), pfx.upper())}:{local}"
     return s
 
@@ -241,18 +242,26 @@ def analyse(g: Graph, terms: Terms, f: Findings, sparql_dir: Path | None) -> dic
             axioms[(s, p, o)].append(ax)
     evidence_inds = set()
     facts = []
-    for s in inds:
+    keys = []
+    seen = set()
+    for s in inds:  # asserted triples between individuals
         for p, o in g.predicate_objects(s):
-            if o in ind_set and p not in (RDF.type,):
-                axs = axioms.get((s, p, o), [])
-                evs = []
-                for ax in axs:
-                    for e in g.objects(ax, LEGO.evidence):
-                        evidence_inds.add(e)
-                        evs.append(e)
-                facts.append({"s": s, "p": curie(p), "o": o, "axioms": axs, "evidence": evs,
-                              "contributors": sorted({str(c) for ax in axs for c in g.objects(ax, DC.contributor)}),
-                              "dates": sorted({str(c) for ax in axs for c in g.objects(ax, DC.date)})})
+            if o in ind_set and p != RDF.type and (s, p, o) not in seen:
+                seen.add((s, p, o)); keys.append((s, p, o))
+    for (s, p, o) in axioms:  # edges that exist only as a reified axiom
+        if s in ind_set and o in ind_set and (s, p, o) not in seen:
+            seen.add((s, p, o)); keys.append((s, p, o))
+            f.add("info", "structure", f"edge {short(s)} {REL.get(curie(p), curie(p))} {short(o)} is reified but not asserted as a plain triple")
+    for (s, p, o) in keys:
+        axs = axioms.get((s, p, o), [])
+        evs = []
+        for ax in axs:
+            for e in g.objects(ax, LEGO.evidence):
+                evidence_inds.add(e)
+                evs.append(e)
+        facts.append({"s": s, "p": curie(p), "o": o, "axioms": axs, "evidence": evs,
+                      "contributors": sorted({str(c) for ax in axs for c in g.objects(ax, DC.contributor)}),
+                      "dates": sorted({str(c) for ax in axs for c in g.objects(ax, DC.date)})})
     out["fact_count"] = len(facts)
 
     # evidence individuals: ECO class + sources + with
@@ -261,15 +270,20 @@ def analyse(g: Graph, terms: Terms, f: Findings, sparql_dir: Path | None) -> dic
         ev_types = [t for t in types.get(e, []) if t.startswith("ECO:")]
         sources = sorted({str(x) for x in g.objects(e, DC.source)})
         withs = sorted({str(x) for x in g.objects(e, LEGO["evidence-with"])})
-        evidence[e] = {"eco": ev_types[0] if ev_types else None, "sources": sources, "with": withs}
+        evidence[e] = {"eco": ev_types[0] if ev_types else None, "eco_all": ev_types, "sources": sources, "with": withs}
         if not ev_types:
             f.add("error", "evidence", f"evidence individual {short(e)} has no ECO class")
+        elif len(ev_types) > 1:
+            f.add("warning", "evidence", f"evidence individual {short(e)} carries {len(ev_types)} ECO classes: {', '.join(ev_types)}")
         if not sources:
             f.add("warning", "evidence", f"evidence {short(e)} ({ev_types[0] if ev_types else '?'}) cites no source (dc:source)")
     out["evidence_count"] = len(evidence)
 
     # --- activities: subject of enabled_by, or typed with the MF root
-    enabled = {fa["s"]: fa["o"] for fa in facts if fa["p"] == "RO:0002333"}
+    enabled = defaultdict(list)
+    for fa in facts:
+        if fa["p"] == "RO:0002333":
+            enabled[fa["s"]].append(fa["o"])
     activities = set(enabled)
     for i in inds:
         if MF_ROOT in types[i]:
@@ -282,14 +296,23 @@ def analyse(g: Graph, terms: Terms, f: Findings, sparql_dir: Path | None) -> dic
             term_info[t] = terms.lookup(t) if t.split(":")[0] in ONTOLOGY_PREFIXES else {"id": t, "found": None}
         return term_info[t]
 
+    unclassified = []
     for i in inds:
-        if i in evidence_inds:
+        if i in evidence_inds or i in activities:
             continue
         for t in types[i]:
             ti = info(t)
             if ti.get("namespace") == "molecular_function":
                 activities.add(i)
+            elif t.startswith("GO:") and ti.get("namespace") is None and ti.get("found") is not False:
+                unclassified.append(i)
     out["activity_count"] = len(activities)
+    # relations: unknown to the table, or obsolete
+    for pcur in sorted({fa["p"] for fa in facts}):
+        if pcur in OBSOLETE_REL:
+            f.add("error", "terms", f"relation {pcur} ({REL[pcur]}) is obsolete; RO replaces it with {OBSOLETE_REL[pcur]} ({REL[OBSOLETE_REL[pcur]]})")
+        elif pcur not in REL:
+            f.add("info", "terms", f"relation {pcur} is not in this script's table; it is counted as context, check it by hand")
 
     def ctx(i, pred):
         return [fa["o"] for fa in facts if fa["s"] == i and fa["p"] == pred]
@@ -302,12 +325,19 @@ def analyse(g: Graph, terms: Terms, f: Findings, sparql_dir: Path | None) -> dic
     # annotation form (acts upstream of or within a process): a process link,
     # not an activity-to-activity edge. Both are reported; only the latter
     # connects the causal graph.
-    causal = [fa for fa in facts if fa["p"] in CAUSAL]
-    act_causal = [fa for fa in causal if fa["s"] in activities and fa["o"] in activities]
+    causal = [fa for fa in facts if fa["p"] in CAUSAL or fa["p"] in PROCESS]
+    act_causal = [fa for fa in causal if fa["p"] in CAUSAL and fa["s"] in activities and fa["o"] in activities]
     process_links = defaultdict(list)
+    regulators = defaultdict(list)
+    for fa in facts:
+        if fa["p"] in REGULATOR:
+            regulators[fa["o"]].append(fa)
     for fa in causal:
         if fa["s"] in activities and fa["o"] not in activities:
             process_links[fa["s"]].append(fa)
+        elif fa["p"] in PROCESS and fa["s"] not in activities:
+            process_links[fa["s"]].append(fa)   # gene product acts upstream of a process: the GPAD form
+            f.add("info", "causal", f"{short(fa['s'])} ({', '.join(types.get(fa['s'], [])) or '?'}) {REL[fa['p']]} {short(fa['o'])}: a gene-product-level annotation, not an activity")
         elif fa["s"] not in activities:
             f.add("warning", "causal", f"causal relation {REL.get(fa['p'], fa['p'])} from {short(fa['s'])} ({', '.join(types.get(fa['s'], [])) or '?'}), which is not an activity, to {short(fa['o'])}")
 
@@ -315,7 +345,8 @@ def analyse(g: Graph, terms: Terms, f: Findings, sparql_dir: Path | None) -> dic
     for a in sorted(activities, key=str):
         acts.append({
             **describe(a),
-            "enabled_by": [describe(x) for x in ctx(a, "RO:0002333")],
+            "enabled_by": [describe(x) for x in enabled.get(a, [])],
+            "regulated_by": [{"relation": REL[fa["p"]], **describe(fa["s"])} for fa in regulators.get(a, [])],
             "part_of": [describe(x) for x in ctx(a, "BFO:0000050")],
             "process_links": [{"relation": REL.get(fa["p"], fa["p"]), **describe(fa["o"])} for fa in process_links.get(a, [])],
             "occurs_in": [describe(x) for x in ctx(a, "BFO:0000066")],
@@ -324,6 +355,8 @@ def analyse(g: Graph, terms: Terms, f: Findings, sparql_dir: Path | None) -> dic
         })
         if a not in enabled:
             f.add("warning", "activity", f"activity {short(a)} ({', '.join(types[a])}) has no enabled_by")
+        elif len(enabled[a]) > 1:
+            f.add("info", "activity", f"activity {short(a)} has {len(enabled[a])} enablers: {', '.join(curie(x) for x in enabled[a])}")
         if not ctx(a, "BFO:0000050") and not process_links.get(a):
             f.add("warning", "activity", f"activity {short(a)} is linked to no biological process (no part_of, no causal link to a process)")
         elif not ctx(a, "BFO:0000050"):
@@ -375,16 +408,18 @@ def analyse(g: Graph, terms: Terms, f: Findings, sparql_dir: Path | None) -> dic
         if i not in touched:
             f.add("error", "structure", f"individual {short(i)} ({', '.join(types[i]) or 'untyped'}) is connected to nothing (noctua-models QC: disconnected individual)")
     # the real queries, if present
-    if sparql_dir and sparql_dir.is_dir():
+    if sparql_dir and sparql_dir.is_dir() and list(sparql_dir.glob("*.rq")):
         for q in sorted(sparql_dir.glob("*.rq")):
             try:
                 rows = list(g.query(q.read_text()))
                 if rows:
-                    f.add("error", "sparql", f"{q.name}: {len(rows)} row(s)")
+                    f.add("error", "sparql", f"{q.name}: {len(rows)} row(s) (a row may repeat per model contributor)")
                 else:
                     f.add("info", "sparql", f"{q.name}: clean")
             except Exception as e:
                 f.add("warning", "sparql", f"{q.name} failed to run: {e}")
+    else:
+        f.add("info", "sparql", "noctua-models queries not run (no --sparql-dir); the native equivalents above ran")
 
     # --- terms
     used_classes = sorted({t for ts in types.values() for t in ts if t.split(":")[0] in ONTOLOGY_PREFIXES})
@@ -411,16 +446,22 @@ def analyse(g: Graph, terms: Terms, f: Findings, sparql_dir: Path | None) -> dic
     out["terms"] = term_rows
     if terms.offline:
         f.add("info", "terms", "offline: term existence, labels, obsolescence and subsets were not checked")
-    for e in terms.errors[:5]:
-        f.add("warning", "terms", f"OLS lookup failed: {e}")
+        if unclassified:
+            f.add("info", "terms", f"offline: {len(unclassified)} GO-typed individual(s) without an enabler could not be classified as activity or context: {', '.join(short(i) for i in unclassified)}")
+    if terms.errors:
+        f.add("warning", "terms", f"{len(terms.errors)} OLS lookup(s) failed; those terms were NOT checked for existence, obsolescence or subsets")
+        for e in terms.errors[:5]:
+            f.add("warning", "terms", f"OLS lookup failed: {e}")
     # evidence summary
     eco_counts = defaultdict(int)
     src_counts = defaultdict(int)
     for ev in evidence.values():
-        eco_counts[ev["eco"] or "?"] += 1
+        for code in (ev["eco_all"] or ["?"]):
+            eco_counts[code] += 1
         for s in ev["sources"]:
             src_counts[s] += 1
     out["evidence_codes"] = dict(sorted(eco_counts.items()))
+    out["evidence_without_source"] = sum(1 for ev in evidence.values() if not ev["sources"])
     out["sources"] = dict(sorted(src_counts.items()))
     return out
 
@@ -441,7 +482,10 @@ def read_gpad(path: Path, f: Findings) -> dict:
     return {"rows": len(rows), "model_states": sorted(states), "not_qualifiers": nots}
 
 
-def markdown(out: dict, f: Findings, gpad: dict | None, src: Path) -> str:
+HOSTS = {"production": "http://noctua.geneontology.org", "dev": "http://noctua-dev.berkeleybop.org"}
+
+
+def markdown(out: dict, f: Findings, gpad: dict | None, src: Path, env: str) -> str:
     m = out["model"]
     L = []
     L.append(f"# Automated QC: {m['id']}")
@@ -449,6 +493,7 @@ def markdown(out: dict, f: Findings, gpad: dict | None, src: Path) -> str:
     L.append(f"Source: `{src.name}`, read {dt.date.today().isoformat()}. This is a read-only check; nothing was changed.")
     L.append("")
     L.append("## Model")
+    L.append(f"- Noctua ({env}): {HOSTS.get(env, HOSTS['production'])}/editor/graph/gomodel:{m['id']}")
     L.append(f"- Title: {m['title'] or '(none)'}")
     L.append(f"- State: {m['state'] or '(none)'}")
     L.append(f"- Contributors: {', '.join(m['contributors']) or '(none)'}")
@@ -467,7 +512,7 @@ def markdown(out: dict, f: Findings, gpad: dict | None, src: Path) -> str:
         L.append("")
     L.append("## Activities")
     L.append("")
-    L.append("| activity | molecular function | enabled by | process (part of, or causal link) | occurs in | inputs / outputs |")
+    L.append("| activity | molecular function | enabled by | process (part of, or causal link) | occurs in | inputs / outputs / regulators |")
     L.append("|---|---|---|---|---|---|")
 
     def lab(d):
@@ -478,7 +523,7 @@ def markdown(out: dict, f: Findings, gpad: dict | None, src: Path) -> str:
             "; ".join(lab(x) for x in a["enabled_by"]) or "—",
             "; ".join([lab(x) for x in a["part_of"]] + [f"{x['relation']}: {lab(x)}" for x in a["process_links"]]) or "—",
             "; ".join(lab(x) for x in a["occurs_in"]) or "—",
-            "; ".join(["in: " + lab(x) for x in a["has_input"]] + ["out: " + lab(x) for x in a["has_output"]]) or "—"))
+            "; ".join(["in: " + lab(x) for x in a["has_input"]] + ["out: " + lab(x) for x in a["has_output"]] + [f"{x['relation']}: {lab(x)}" for x in a["regulated_by"]]) or "—"))
     L.append("")
     L.append("## Causal edges")
     L.append("")
@@ -495,6 +540,7 @@ def markdown(out: dict, f: Findings, gpad: dict | None, src: Path) -> str:
     L.append("")
     L.append("## Evidence")
     L.append(f"- Codes: {out['evidence_codes']}")
+    L.append(f"- Evidence with no source: {out['evidence_without_source']}")
     L.append(f"- Sources: {out['sources']}")
     L.append("")
     L.append("## Terms used")
@@ -515,6 +561,7 @@ def main(argv=None) -> int:
     ap.add_argument("--sparql-dir", type=Path, help="directory of noctua-models *.rq queries to run as well")
     ap.add_argument("--json", type=Path, help="write the machine-readable result here")
     ap.add_argument("--markdown", type=Path, help="write the report here (default: stdout)")
+    ap.add_argument("--env", choices=("production", "dev"), default="production", help="which Noctua the file came from (for the link in the report)")
     a = ap.parse_args(argv)
     if not a.ttl.is_file():
         print(f"no such file: {a.ttl}", file=sys.stderr); return 2
@@ -529,7 +576,7 @@ def main(argv=None) -> int:
     gpad = read_gpad(a.gpad, f) if a.gpad and a.gpad.is_file() else None
     out["gpad"] = gpad
     out["findings"] = f.items
-    report = markdown(out, f, gpad, a.ttl)
+    report = markdown(out, f, gpad, a.ttl, a.env)
     if a.json:
         def default(o):
             return str(o)

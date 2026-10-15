@@ -204,14 +204,22 @@ The `barista` commands take the model id as an argument and are the first
 choice. When an operation has no command (changing an individual's class, for
 example) and you post to `m3BatchPrivileged` yourself:
 
-- Pass the JSON inline, `--data-urlencode 'requests=[...]'`, as the store and
-  export commands in `/save-to-drop-box` do. If it must come from a file,
-  create that file with `mktemp`, never a fixed path such as `/tmp/req.json`:
-  the hub is one machine shared by every curator, and on 2026-10-14 a stale
-  file of that name, left by one curator, was posted by another curator's
-  session with their token, which put their name on a model they never touched.
-- Stop at the first failed step: `set -euo pipefail`, and `&&` between writing
-  the file and the curl that reads it.
+- Send the same four fields the store command in `/save-to-drop-box` sends
+  (`token=$BARISTA_TOKEN`, `intention=action`,
+  `provided-by=http://geneontology.org`, `requests=...`); the export there
+  goes to the read-only `m3Batch` and needs none of them.
+- Build the JSON in a shell variable and pass it inline,
+  `--data-urlencode "requests=$payload"`; a quoted heredoc
+  (`payload=$(cat <<'EOF' ... EOF)`) keeps apostrophes in labels and comments
+  intact. If it must come from a file, create that file with `mktemp`, never
+  a fixed path such as `/tmp/req.json`: the hub is one machine shared by
+  every curator, and on 2026-10-14 a stale file of that name, left by one
+  curator, was posted by another curator's session with their token, which
+  put their name on a model they never touched.
+- Chain the steps with `&&` (the write, then the curl that reads the file) so
+  a failed write never reaches the send. `set -euo pipefail` belongs at the
+  top of a standalone script only; inside a function or an interactive shell
+  it leaks into the caller or is switched off by an `&&`/`if` context.
 - Print the payload before sending it and check that every `model-id` in it is
   the model the curator is working on. The dev server accepts any valid token
   for any model, so "don't edit models you didn't create" is yours to enforce.

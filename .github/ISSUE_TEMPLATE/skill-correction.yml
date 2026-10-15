@@ -1,0 +1,51 @@
+name: Skill correction
+description: A skill did the wrong thing, or its text is wrong or out of date.
+title: "[skill] <skill name>: <one line>"
+labels: ["skill-correction"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Filed by a curator or by their agent on their behalf. Say what happened, not what to change; the fix is discussed on the issue. Do not paste tokens, and avoid other people's personal details.
+  - type: input
+    id: skill
+    attributes:
+      label: Skill
+      description: The directory name under `skills/`, e.g. `noctua`, `gocam-best-practice`.
+    validations:
+      required: true
+  - type: textarea
+    id: happened
+    attributes:
+      label: What happened
+      description: What the agent did or said, as close to verbatim as is useful.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: input
+    attributes:
+      label: Input involved
+      description: Model id, gene or protein, publication, term, or the prompt that led here. Optional.
+  - type: input
+    id: where
+    attributes:
+      label: Where
+      description: "`GO AI Hub` (the default), or another environment and its agent."
+      value: GO AI Hub
+  - type: input
+    id: session
+    attributes:
+      label: Session or trace reference
+      description: Optional. A session id or trace link, once the hub records them.
+  - type: checkboxes
+    id: agent
+    attributes:
+      label: Authorship
+      options:
+        - label: This issue was drafted by an agent on behalf of the curator named as its author.

@@ -110,10 +110,18 @@ in Noctua, and when useful a one- or two-sentence Noctua comment (PMID and
 figure) that makes sense to someone who never saw the report. Also record
 what is fine; authors need to know what passed.
 
-Full text is read only for a finding you are about to rate critical or major
-that depends on figure-level detail (species of the cells, the assay, the
-direction of an effect): PMC open access, or a PDF the curator supplies.
-Limit 5 papers. Everything else stays "not verified (abstract only)".
+Full text is read for a finding you are about to rate critical or major that
+depends on figure-level detail (species of the cells, the assay, the direction
+of an effect): PMC open access, or a PDF the curator supplies. Budget 5 papers
+per review (raise it if the curator asks); a finding whose paper was not read
+is downgraded to "not verified (abstract only)", never stated as fact.
+
+When a cited paper does not support a fact, offer the author a better
+reference rather than only flagging the weak one: first look for one already
+cited elsewhere in the model (the references index in `qc.md`; curators often
+have the right paper on a neighbouring fact), then one `pubmed-eutils` search
+for that fact. At most 3 such facts per review; the candidate PMID goes into
+the drafted fix, marked as a candidate the author must read.
 
 ## Step 6: optional modules, only when asked
 
@@ -134,8 +142,8 @@ by severity and the critical and major items in one line each, what changed
 since the last round or the parent, the literature caveat, the file paths, and
 the pathway-editor link from `qc.md` (never the graph editor link).
 
-Then stop. Do not re-derive the annotations, search for new biology, or
-propose a different model. Follow-up happens only when the curator returns
+Then stop. Do not re-derive the annotations, search the literature beyond the
+limits above, or propose a different model. Follow-up happens only when the curator returns
 the checklist (save it as `checklist-done.md`, answer their notes, explain any
 point they say they do not understand in plainer words) or a new version (rerun,
 keep ids, add "what changed since"). If an earlier report was wrong, say so at

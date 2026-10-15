@@ -114,6 +114,9 @@ the facts each supports" in `qc.md`; for each PMID, fact by fact:
   does not cover? A comment "evidence copied from ..." is the usual trace.
 - A review under an experimental code: TAS or NAS at most; better, the
   primary paper.
+- When the cited paper does not show the fact, suggest a better reference:
+  one already cited elsewhere in the model first, then one search (Step 5
+  limits). The suggestion is a candidate for the author to read, not a fact.
 
 Raise this even when a similar item was declined earlier: new edges reuse
 references. Without the full text, "not verified (abstract only)".

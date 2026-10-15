@@ -1,0 +1,11 @@
+!gpa-version: 1.1
+ZFIN	ZDB-GENE-991207-22	acts_upstream_of_or_within	GO:0007507	PMID:19101534	ECO:0000315	ZFIN:ZDB-MRPHLNO-091103-3		20091231	ZFIN		contributor=GOC:zfin_curators|model-state=production|noctua-model-id=gomodel:ZFIN_ZDB-GENE-991207-22
+ZFIN	ZDB-GENE-991207-22	acts_upstream_of_or_within	GO:0007155	PMID:15494018	ECO:0000305	GO:0005912		20261014	ZFIN		contributor=GOC:zfin_curators|contributor=https://orcid.org/0000-0001-5831-7439|model-state=production|noctua-model-id=gomodel:ZFIN_ZDB-GENE-991207-22
+ZFIN	ZDB-GENE-991207-22	acts_upstream_of_or_within	GO:0030178	PMID:19101534	ECO:0000316	ZFIN:ZDB-GENE-990708-5,ZFIN:ZDB-MRPHLNO-091103-3		20091231	ZFIN	part_of(GO:0007507)	contributor=GOC:zfin_curators|model-state=production|noctua-model-id=gomodel:ZFIN_ZDB-GENE-991207-22
+ZFIN	ZDB-GENE-991207-22	located_in	GO:0005912	PMID:15494018	ECO:0000314			20041026	ZFIN		contributor=GOC:zfin_curators|model-state=production|noctua-model-id=gomodel:ZFIN_ZDB-GENE-991207-22
+ZFIN	ZDB-GENE-991207-22	part_of	GO:0016342	PMID:10456847	ECO:0000314			20041221	ZFIN		contributor=GOC:zfin_curators|model-state=production|noctua-model-id=gomodel:ZFIN_ZDB-GENE-991207-22
+ZFIN	ZDB-GENE-991207-22	acts_upstream_of_or_within	GO:0030178	PMID:19101534	ECO:0000315	ZFIN:ZDB-MRPHLNO-091103-3		20091231	ZFIN		contributor=GOC:zfin_curators|model-state=production|noctua-model-id=gomodel:ZFIN_ZDB-GENE-991207-22
+ZFIN	ZDB-GENE-991207-22	acts_upstream_of_or_within	GO:0003181	PMID:19101534	ECO:0000315	ZFIN:ZDB-MRPHLNO-091103-3		20091231	ZFIN		contributor=GOC:zfin_curators|model-state=production|noctua-model-id=gomodel:ZFIN_ZDB-GENE-991207-22
+ZFIN	ZDB-GENE-991207-22	located_in	GO:0030057	PMID:10456847	ECO:0000314			20040127	ZFIN		contributor=GOC:zfin_curators|model-state=production|noctua-model-id=gomodel:ZFIN_ZDB-GENE-991207-22
+ZFIN	ZDB-GENE-991207-22	located_in	GO:0005912	PMID:10456847	ECO:0000314			20040127	ZFIN		contributor=GOC:zfin_curators|model-state=production|noctua-model-id=gomodel:ZFIN_ZDB-GENE-991207-22
+ZFIN	ZDB-GENE-991207-22	located_in	GO:0005634	PMID:15494018	ECO:0000314			20041026	ZFIN		contributor=GOC:zfin_curators|model-state=production|noctua-model-id=gomodel:ZFIN_ZDB-GENE-991207-22

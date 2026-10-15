@@ -187,7 +187,8 @@ references. Without the full text, "not verified (abstract only)".
   term when they are not, per `How_to_annotate_complexes_in_GO-CAM.md`.
 - Process context: each MF `part of` the right process; nested processes make
   sense. Cytokine-signalling models: GO:0019221 in every activity unit;
-  sibling cytokine-production terms collapsed to GO:0001819.
+  sibling cytokine-production terms collapsed to GO:0001819, with GO:0050729
+  as the process above them.
 - Models bound for the drop box (gocam-py YAML): the YAML keeps one `part of`
   chain per activity, so parallel process branches on one activity need a
   single nested chain; flag them.

@@ -11,7 +11,7 @@ metadata:
 # GO-CAM model review
 
 This skill performs a review of a GO-CAM model: consistent checks, the same
-severities and report shape every time, and feedback the author can act on in
+severities and report format every time, and feedback the author can act on in
 Noctua. Uses a token-free fetch and a tested checks script.
 
 ## Ground rules
@@ -36,7 +36,7 @@ Noctua. Uses a token-free fetch and a tested checks script.
 6. **Bounded.** One pass over the check groups, the limits in each step, then
    stop. A review is not an open-ended investigation of the biology.
 
-## Step 1: identify the model and the round
+## Step 1: Identify the model and the round
 
 Accept an id (`gomodel:...` or bare), a Noctua URL (editor, form, pathway
 editor or download link; a noctua-dev URL selects that server), or a file the
@@ -56,7 +56,7 @@ what was declined and why. Issue ids stay stable across rounds.
 hand, it is the path of this skill's directory (`~/.claude/skills/gocam-review`
 on the GO AI Hub).
 
-## Step 2: fetch (read-only, no credential)
+## Step 2: Fetch (read-only, no credential)
 
 ```bash
 bash "${CLAUDE_SKILL_DIR}/scripts/fetch_model.sh" "<id | URL | file>" "$R"     # add: dev   for a dev model by id
@@ -67,7 +67,7 @@ paths and the environment; use those, and keep the environment for Step 3:
 `ENV=production` or `ENV=dev`. HTTP 400 means the id is not on that server;
 "could not reach" is a network problem, not a missing model.
 
-## Step 3: mechanical checks
+## Step 3: Mechanical checks
 
 ```bash
 uv run --quiet --script "${CLAUDE_SKILL_DIR}/scripts/gocam_qc.py" "$R/$ID.ttl" --gpad "$R/$ID.gpad" \
@@ -99,7 +99,7 @@ diff <(uv run --quiet --script "${CLAUDE_SKILL_DIR}/scripts/gocam_qc.py" "$R/$PA
      <(uv run --quiet --script "${CLAUDE_SKILL_DIR}/scripts/gocam_qc.py" "$R/$ID.ttl" --offline --facts-only)
 ```
 
-## Step 4: gather context, within limits
+## Step 4: Gather context, within limits
 
 - Read the `gocam-best-practice` references that match the activity types in
   the model (receptor, TF, transporter, enzyme regulator, adaptor, complex,
@@ -112,14 +112,14 @@ diff <(uv run --quiet --script "${CLAUDE_SKILL_DIR}/scripts/gocam_qc.py" "$R/$PA
   an experimental annotation to the same or a more specific term (`amigo`
   skill, `bioentity-annotations`)? Limit 10 lookups.
 
-## Step 5: the judgement pass
+## Step 5: The judgement pass
 
-Work through `references/checks.md`, groups A to I, once. Each finding has an
+Work through `references/checks.md`, checks A to I, once. Each finding has an
 id (`Q1`, `Q2`, ... stable across rounds), a severity (critical, major,
 moderate, minor, note), its group letter, where (the fact, with the node
-handles from `qc.md`, and the evidence line), what is wrong, the concrete fix
-in Noctua, and when useful a one- or two-sentence Noctua comment (PMID and
-figure) that makes sense to someone who never saw the report. Also record
+handles from `qc.md`, and the evidence line), what is wrong, the proposed fix
+in Noctua, and when useful a one- or two-sentence Noctua comment (including PMID and
+figure as appropriate) that makes sense to someone who never saw the report. Also record
 what is fine; authors need to know what passed.
 
 Full text is read for a finding you are about to rate critical or major that
@@ -136,7 +136,7 @@ have the right paper on a neighbouring fact), then one `pubmed-eutils` search
 for that fact. At most 3 such facts per review; the candidate PMID goes into
 the drafted fix, marked as a candidate the author must read.
 
-## Step 6: optional modules, only when asked
+## Step 6: Optional modules, only when asked
 
 - `--with-uniprot`: the model against the enablers' UniProt entries (function,
   Rhea reaction and ChEBI participants, location), both directions, written to
@@ -144,7 +144,7 @@ the drafted fix, marked as a candidate the author must read.
 - Duplicate models on the same process and genes: not searchable without a
   token; suggest the curator check Noctua's search.
 
-## Step 7: deliver, report back, stop
+## Step 7: Deliver, report back, stop
 
 Write, per `references/report.md`: `review.md` (findings by severity, what is
 fine, evidence notes with full text versus abstract per PMID, verdict:

@@ -39,3 +39,15 @@ must match the experiment in the cited figure, not the paper's overall conclusio
 - Each value must be right for the fact it sits on: the IPI partner is the partner on
   that edge; one ortholog does not serve two different genes.
 
+## References
+
+- Reference ids are a prefix, a colon, and digits only, with no space and no other characters:
+  - **PubMed:** `PMID:` followed by the PubMed id exactly as PubMed gives it, digits
+    with no leading zeros (e.g. `PMID:12345678`, `PMID:9606`). Pattern: `PMID:[1-9][0-9]*`.
+  - **GO reference:** `GO_REF:` followed by exactly 7 digits, zero-padded
+    (e.g. `GO_REF:0000024`, not `GO_REF:24`). Pattern: `GO_REF:[0-9]{7}`.
+- Use the PMID when one exists, not a DOI.
+- One reference per evidence line; the same evidence line twice on one fact is a duplicate.
+- GO_REF:0000024 goes only with ISS-family codes; IBA goes only with GO_REF:0000033.
+- Cite the paper that shows the fact. A sentence such as "X does Y (Author et al.)" in
+  paper P is a citation, not P's evidence: cite the original paper instead.

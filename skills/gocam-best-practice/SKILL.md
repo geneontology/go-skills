@@ -38,7 +38,7 @@ Use this skill when:
 - **How_to_annotate_complexes_in_GO-CAM.md**: When and how to represent protein complexes
 - **Gene_product_identifiers.md**: Choosing the enabler identifier (MOD accession vs UniProtKB)
 - **Relation_selection.md**: Causal and contextual relations, with usage for each
-- **Evidence_and_evidence_codes.md**: Evidence codes and the ISS ortholog-transfer recipe
+- **Evidence_and_evidence_codes.md**: Evidence codes, the with/from field, references, and the ISS ortholog-transfer recipe
 
 ## Workflow for Creating a GO-CAM Model
 
@@ -143,7 +143,7 @@ barista add-fact -m $MODEL -s actin_mf -t actin_enabler -p RO:0002333 --session 
 
 ## Evidence
 
-All facts MUST be supported with an evidence code and a reference, and the code must reflect what the cited paper **actually** demonstrates — never over-claim (e.g. IDA for a function that was only inferred). See `references/Evidence_and_evidence_codes.md` for the code-by-code guide (IDA/IMP/IC), the ISS ortholog-transfer recipe (ECO:0000250 + GO_REF:0000024 with the source ortholog's MOD id in `with/from`), and how to handle IBA/IEA annotations fetched from AmiGO.
+All facts MUST be supported with an evidence code and a reference, and the code must reflect what the cited paper **actually** demonstrates — never over-claim (e.g. IDA for a function that was only inferred). See `references/Evidence_and_evidence_codes.md` for the code-by-code guide (IDA/IMP/IGI/IPI/IEP/IC/NAS/TAS), when `with/from` is required or must be empty, reference form, the ISS ortholog-transfer recipe (ECO:0000250 + GO_REF:0000024 with the source ortholog's MOD id in `with/from`), and how to handle IBA/IEA annotations fetched from AmiGO.
 
 # Validation Checklist
 

@@ -22,12 +22,14 @@ context before it becomes a finding.
 
 ## A. Hygiene
 
-- Title says what the model is about (process, key players, context). Not a
+- Title says what the model is about (main biological process, additional
+  relevant biological context (such as cells, tissues, specific genes), and organism). Not a
   placeholder, not a PMID. Length is not raised. **[flag]** `hygiene`
 - State is the curator's call; say if it looks inconsistent (production with
-  open reviewer comments). Taxon set. **[flag]** `hygiene`
+  open reviewer comments).
+- Confirm that the taxon set. **[flag]** `hygiene`
 - Model comments addressed to a reviewer or describing a past edit should be
-  resolved before production; comments documenting a decision are fine. Read
+  resolved before upgrading the model to production; comments documenting a decision are fine. Read
   each. **[flag]** `hygiene: model comment to read`
 - Orphans and leftovers: individuals in no fact, evidence attached to nothing,
   the same edge reified twice. **[flag]** `structure` (these are the

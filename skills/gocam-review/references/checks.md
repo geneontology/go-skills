@@ -1,8 +1,7 @@
 # GO-CAM review checks
 
-The checks a second curator runs. The script (`qc.md`) covers the mechanical
-part, marked **[flag]** with the tag it uses; everything else is read. The
-rules the model is judged against are in the `gocam-best-practice` skill
+The GO-CAM review skill checks a GO-CAM model, either in Noctua, in Noctua-dev, or as a file loaded in the workspace. The script (`qc.md`) covers the mechanical part, marked **[flag]** with the tag it uses; 
+everything else is read. The rules the model is judged against are in the `gocam-best-practice` skill
 (`references/Relation_selection.md`, `Evidence_and_evidence_codes.md`, and the
 activity-type files); read the ones that match the model's activities.
 
@@ -10,24 +9,27 @@ activity-type files); read the ones that match the model's activities.
 
 | Severity | Meaning |
 |---|---|
-| critical | The model says something false, or cannot stand in production as is: wrong gene, wrong species of data under an experimental code, a claim not in the paper, a missing enabler, a fact with no evidence, a single-activity model, an obsolete or do-not-annotate term. |
-| major | A fact is unsupported or mis-coded: ISS without an experimental source, a direct relation with no known mechanism, a reference that does not show the fact. |
+| critical | The model makes a false statement, or cannot stand in production as is: wrong gene, a claim not in the paper, a missing enabler, a fact with no evidence, a single-activity model, an obsolete term, or a term present in the do-not-annotate or obsoletion-candidate subsets. |
+| major | A fact is unsupported or mis-coded: incorrect organism for the evidence code (experimental captured instead of ISS), ISS without an experimental source, a direct relation without a known mechanism, a reference that does not show the fact. Hygiene and style: malformed reference, malformed identifier in 'with/from' or inputs/outputs.|
 | moderate | Correct in substance but weakly supported or imprecise: a self-referential IC, a too-general term, an unverifiable reference, a bare DOI where a PMID exists, missing location or process. |
-| minor | Hygiene and style: malformed reference, duplicate evidence line, leftover comment. |
+| minor | Duplicate evidence line, leftover comment. |
 | note | Not a defect: a remark, a question for the curator, or something that is fine and worth saying. |
 
 Script severities are inputs, not verdicts: an `error` is usually a critical
 or major candidate, a `warning` a major or moderate candidate; read each in
 context before it becomes a finding.
 
-## A. Hygiene
+## Checking procedure 
+There are 8 groups of checks ran in this skill, labeled A-I. 
 
-- Title says what the model is about (main biological process, additional
-  relevant biological context (such as cells, tissues, specific genes), and organism). Not a
+### A. Hygiene
+
+- The title correctly and succinctly describes what the model is about (main biological process, additional
+  relevant biological context (such as cells, tissues, specific genes), and organism. Not a
   placeholder, not a PMID. Length is not raised. **[flag]** `hygiene`
-- State is the curator's call; say if it looks inconsistent (production with
+- The Model State is the curator's call; say if it looks inconsistent (production with
   open reviewer comments).
-- Confirm that the taxon set. **[flag]** `hygiene`
+- Confirm that the taxon set is correct. **[flag]** `hygiene`
 - Model comments addressed to a reviewer or describing a past edit should be
   resolved before upgrading the model to production; comments documenting a decision are fine. Read
   each. **[flag]** `hygiene: model comment to read`
@@ -42,7 +44,7 @@ context before it becomes a finding.
   visible the second way, and is critical.
 - Single-activity model: GO expects a multi-activity flow. **[flag]** `structure`
 
-## B. Evidence codes and the with/from field
+### B. Evidence codes and the with/from field
 
 - The code matches the experiment in the cited figure: IDA for a direct assay
   of the activity (purified protein, reconstitution, enzymology); IMP for
@@ -75,7 +77,7 @@ context before it becomes a finding.
   the Step 5 limits: papers already in the model first, then one search, three
   facts per review.
 
-## C. ISS and orthology
+### C. ISS and orthology
 
 For every ortholog in a `with` on ISS/ISO/ISA evidence:
 
@@ -90,7 +92,7 @@ For every ortholog in a `with` on ISS/ISO/ISA evidence:
 4. When the transfer carries the model, check the source annotation's own
    reference; it can be wrong too, and that is worth telling the curator.
 
-## D. Species of the data and of the entities
+### D. Species of the data and of the entities
 
 - An experimental code on a gene product of the model's taxon needs an
   experiment on that species' gene product. Data on the mouse protein in a
@@ -107,7 +109,7 @@ For every ortholog in a `with` on ISS/ISO/ISA evidence:
   SGD, WB, PomBase, ...), not UniProtKB; human is the exception. MGI ids are
   written `MGI:MGI:n`. Applies to `with` too.
 
-## E. References reused out of context (every PMID, every round)
+### E. References reused out of context (every PMID, every round)
 
 The most common real problem, invisible to the script. Use "References, and
 the facts each supports" in `qc.md`; for each PMID, fact by fact:
@@ -127,7 +129,7 @@ the facts each supports" in `qc.md`; for each PMID, fact by fact:
 Raise this even when a similar item was declined earlier: new edges reuse
 references. Without the full text, "not verified (abstract only)".
 
-## F. Causal relations and molecule handling
+### F. Causal relations and molecule handling
 
 `Relation_selection.md` is the rule; the short version:
 
@@ -169,7 +171,7 @@ references. Without the full text, "not verified (abstract only)".
   location must be compatible with the `occurs in` of the activities that
   produce or consume it.
 
-## G. Term choice, specificity, locations, enablers
+### G. Term choice, specificity, locations, enablers
 
 - Labels, obsolescence, `gocheck_do_not_annotate` and obsoletion candidates
   for every class, and taxon constraints for the species. **[flag]** `terms`
@@ -195,7 +197,7 @@ references. Without the full text, "not verified (abstract only)".
   chain per activity, so parallel process branches on one activity need a
   single nested chain; flag them.
 
-## H. Lineage
+### H. Lineage
 
 - Earlier rounds: read `checklist.md` and `checklist-done.md` under
   `~/reviews/*-<id>/`. Done items: verify they are fixed. Declined with a
@@ -208,7 +210,7 @@ references. Without the full text, "not verified (abstract only)".
   has access to production Noctua.
 - Dev versus production: if the model is in both and they differ, say how.
 
-## I. Literature honesty
+### I. Literature honesty
 
 - For every PMID, the evidence notes record what it supports, at what level
   (biochemical, cellular loss-of-function, genetic, interaction, imaging,

@@ -10,8 +10,8 @@ activity-type files); read the ones that match the model's activities.
 | Severity | Meaning |
 |---|---|
 | critical | The model makes a false statement, or cannot stand in production as is: wrong gene, a claim not in the paper, a missing enabler, a fact with no evidence, a single-activity model, an obsolete term, or a term present in the do-not-annotate or obsoletion-candidate subsets. |
-| major | A fact is unsupported or mis-coded: incorrect organism for the evidence code (experimental captured instead of ISS), ISS without an experimental source, a direct relation without a known mechanism, a reference that does not show the fact. Hygiene and style: malformed reference, malformed identifier in 'with/from' or inputs/outputs.|
-| moderate | Correct in substance but weakly supported or imprecise: a self-referential IC, a too-general term, an unverifiable reference, a bare DOI where a PMID exists, missing location or process. |
+| major | A fact is unsupported or mis-coded: incorrect organism for the evidence code (experimental captured instead of ISS),  a direct relation without a known mechanism, a reference that does not show the fact. Hygiene and style: malformed reference, malformed identifier in 'with/from' or inputs/outputs.|
+| moderate | Correct in substance but weakly supported or imprecise: a self-referential IC, a too-general term, an unverifiable reference, ISS without an experimental source, a bare DOI where a PMID exists, missing location or process. |
 | minor | Duplicate evidence line, leftover comment. |
 | note | Not a defect: a remark, a question for the curator, or something that is fine and worth saying. |
 
@@ -46,56 +46,47 @@ There are 8 groups of checks ran in this skill, labeled A-I.
 
 ### B. Evidence codes and the with/from field
 
-- The code matches the experiment in the cited figure: IDA for a direct assay
-  of the activity (purified protein, reconstitution, enzymology); IMP for
-  loss-of-function showing the gene product is required (siRNA, knockout,
-  degron, rescue), not an IDA on the reaction; IGI with the other gene in
-  `with`; IPI with the partner; IEP for expression patterns, on processes
-  only; IC with the grounding term in `with`. Structure, clinical-mutation,
-  trafficking and targeting papers rarely support an enzymatic or transport
-  IDA. **[flag]** `with: IEP`
-- `with` present where the code needs it (IC, IPI, IGI, ISS/ISO/ISA, IBA) and
-  absent where it must not be (IDA, IEP, TAS, NAS). An IDA with a `with` value
-  is usually a colocalisation inference mis-coded as a direct assay.
-  **[flag]** `with`
+The rules are in `gocam-best-practice` `references/Evidence_and_evidence_codes.md`
+(evidence codes, the with/from field, references). Check every fact against them;
+what the review adds:
+
+- Code against the experiment: read the cited figure, not the abstract or the
+  paper's conclusion.
+- IEP on a fact whose term is not a biological process. **[flag]** `with: IEP`
+- `with` present or absent as the code requires. **[flag]** `with`
 - Circular `with`: an IC citing the term it supports or the activity's own
   function; an ISS citing the gene being annotated. **[flag]** `with: circular`
-- Copy-paste `with`: one value repeated on facts where it cannot be right (an
-  IPI partner that is not the partner on that edge; one ortholog for two
-  genes). Use the with/from inventory in `qc.md`.
-- Recipe mismatch: GO_REF:0000024 only with ISS-family codes; IBA only with
-  GO_REF:0000033. **[flag]** `with: recipe`
-- Reference form: `PMID:n`, `GO_REF:nnnnnnn`; one reference per evidence line;
-  the same evidence line twice on one fact is a duplicate; a bare DOI when a
-  PMID exists is moderate (`gocam-review` rated it a blocker, `gocam-qc`
-  hygiene). **[flag]** `evidence`
-- IEA and IBA in a GO-CAM are copied from an existing annotation, not created.
-  NAS and TAS are allowed but weak; note when a primary paper exists.
-- Attribution: a sentence like "X does Y (Author et al.)" in paper P is a
-  citation, not P's evidence. If the model cites P for a fact P attributes to
-  Q, the fix is to re-source to Q. Finding Q, or any better reference, follows
-  the Step 5 limits: papers already in the model first, then one search, three
-  facts per review.
+- Copy-paste `with`: one value repeated on facts where it cannot be right. Use
+  the with/from inventory in `qc.md`.
+- Recipe mismatch between GO_REF and code. **[flag]** `with: recipe`
+- Reference form and duplicate evidence lines. **[flag]** `evidence`.
+- A bare DOI when a PMID exists is moderate (`gocam-review` rated it a blocker, `gocam-qc`
+  hygiene).
+- IEA or IBA not copied from an existing annotation; NAS or TAS where a primary
+  paper exists: note it.
+- Attribution: if the model cites P for a fact P attributes to Q, the fix is to
+  re-source to Q. Finding Q, or any better reference, follows the Step 5 limits:
+  papers already in the model first, then one search, three facts per review.
 
 ### C. ISS and orthology
 
-For every ortholog in a `with` on ISS/ISO/ISA evidence:
+The ISS recipe is in `Evidence_and_evidence_codes.md`. For every ortholog in a
+`with` on ISS/ISO/ISA evidence:
 
-1. The source gene has an experimental annotation (EXP, IDA, IMP, IGI, IPI,
-   IEP, or HTP codes) to the same or a more specific term (`amigo` skill). An
-   ISS whose source is itself ISS, ISO, IBA or IEA has no source: major.
+1. Look up the source gene's annotation (`amigo` skill): experimental, to the
+   same or a more specific term. An ISS whose source is itself ISS, ISO, IBA or
+   IEA has no source: major.
 2. For a causal edge, the source data show the same relation between the
    orthologs.
-3. The `with` id is the source ortholog in its own namespace (MGI:MGI:...,
-   RGD:..., ZFIN:..., UniProtKB:...) and is the true ortholog (PANTHER or the
-   Alliance when in doubt, especially in families with paralogs).
+3. The `with` id is the true ortholog (PANTHER or the Alliance when in doubt,
+   especially in families with paralogs).
 4. When the transfer carries the model, check the source annotation's own
    reference; it can be wrong too, and that is worth telling the curator.
 
 ### D. Species of the data and of the entities
 
-- An experimental code on a gene product of the model's taxon needs an
-  experiment on that species' gene product. Data on the mouse protein in a
+- An experimental evidence code on an assertion needs an
+  experiment on the species encoding the gene product enabler. Data on a mouse protein in a
   human model is ISS from the mouse gene, not IDA. A human protein in a
   heterologous system (HEK293, CHO, yeast, Xenopus oocytes) supports IDA on
   the human protein; say which it was. Only down-code the facts that rest
@@ -152,7 +143,8 @@ references. Without the full text, "not verified (abstract only)".
 - Inputs are the direct targets. Do not call a `has input` redundant because a
   causal edge exists; call it missing when a substrate, regulated gene,
   receptor ligand or activated effector is absent. When `has input` is a gene
-  product there is no `has output`; the relation is `directly regulates`.
+  product there is no `has output`; the relation is `directly regulates`,
+  except when there are intervening activities.
 - Molecule reuse: the productive handoff is good modelling. A molecule that is
   the `has output` of one activity and the `has input`, or the small-molecule
   activator or inhibitor, of a downstream activity should be the same

@@ -75,21 +75,22 @@ hits=[s["name"] for s in (t.get("obo_synonym") or []) for x in (s.get("xrefs") o
 print("UniProt synonym:", hits or "NONE — flag to curator")'
 ```
 
-## GO-CAM-specific rule: one compound → one ChEBI ID across a handoff
+## GO-CAM-specific rule: a handoff is one individual with one ChEBI ID
 
-When activity A's `has output` is the substrate (`has input`) of activity B, the causal
-`provides input for` relation is **inferred from the shared molecule** (and, per
-`Relation_selection.md`, not materialized for small-molecule handoffs). That inference
-only fires if both sides carry the **same ChEBI ID**.
+When activity A's `has output` is the substrate (`has input`) of activity B, the molecule
+is **one individual**, the object of both facts. The causal `provides input for` relation
+is **inferred from that shared individual** (and, per `Relation_selection.md`, not
+materialized for small-molecule handoffs).
 
-So map to the standard form *consistently*: if you use the pH-7.3 form as an output, use the **same
-pH-7.3 form** as the downstream input. Mixing `CHEBI:15971` (neutral) on one activity and
-`CHEBI:57595` (zwitterion) on the next describes them as two different chemicals and
-**silently breaks the chain** — this is a listed common mistake in `SKILL.md`.
+Splitting the handoff into two individuals breaks the chain, and so does typing the two
+sides with different forms of the compound: `CHEBI:15971` (neutral) as A's output and
+`CHEBI:57595` (zwitterion) as B's input describe two different chemicals. Pick the
+pH-7.3 form once and use it for the shared individual — this is a listed common mistake
+in `SKILL.md`.
 
-The same care applies to the distinct-individuals rule: a molecule playing two roles
-(output of one activity, input of the next) still needs a **distinct individual per role**,
-but each of those individuals must reference the **same ChEBI class**.
+Only the handoff is shared. The same compound as the input of two different reactions,
+or as the output of two different reactions, is **a separate individual for each**,
+all typed with the same ChEBI class.
 
 ## Quick checklist
 

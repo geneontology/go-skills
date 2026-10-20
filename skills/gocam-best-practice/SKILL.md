@@ -114,9 +114,11 @@ Key reminders:
 - **'has input'** captures the direct target (enzyme substrate, gene regulated by a TF, receptor activated by a ligand, effector activated by a receptor). Only primary inputs/outputs — not chemical-group donors.
 - When a MF's `has output` chemical is the `has input` of the next MF, the `provides input for` edge is inferred and is **not** materialized.
 
-## Distinct Individuals for Distinct Roles (do NOT reuse instances)
+## Distinct Individuals for Distinct Roles (one exception: the handoff)
 
-Every role a molecule plays needs its **own individual**, even when it is the same molecular entity (same UniProtKB ID/MOD ID/GO protein-containing complex ID). In particular, a molecule that is the **`has input`** (RO:0002233) of one activity and the **`enabled by`** (RO:0002333) of another activity must be represented as **two separate
+**The handoff shares one individual.** When the `has output` of one activity is the `has input` of the next activity (the molecule is passed downstream), use **one individual** for both facts. That shared node is what represents the handoff, and `provides input for` is inferred from it (see `references/Chemical_entities_ChEBI.md`).
+
+**Every other role gets its own individual**, even when it is the same molecular entity (same ChEBI ID/UniProtKB ID/MOD ID/GO protein-containing complex ID): the inputs of two different reactions are two individuals, and the outputs of two different reactions are two individuals. In particular, a molecule that is the **`has input`** (RO:0002233) of one activity and the **`enabled by`** (RO:0002333) of another activity must be represented as **two separate
 individuals** of that class — never a single shared instance. 
 
 Concrete example: a chaperone folds actin (chaperone activity `has input` actin), and folded actin then `enables` a downstream structural molecule activity. Create two
@@ -156,7 +158,8 @@ or gocheck_obsoletion_candidate <http://purl.obolibrary.org/obo/go#gocheck_obsol
 - [ ] Causal relations match the biological mechanism (direct vs. indirect)
 - [ ] 'has input' relations specify the correct, direct targets
 - [ ] When the output of a MF is the input of the next MF, only 'has ouput' 'and 'has input' relations should be created, not  'provides input for'. 'Provides input for' is only used when the output and input are not specified.
-- [ ] No individual is reused across roles: a molecule that is both a 'has input' and an 'enabled by' has a **separate individual for each role** 
+- [ ] A handoff (the 'has output' of one MF is the 'has input' of the next) uses **one shared individual**
+- [ ] Otherwise no individual is reused across roles: inputs of different reactions, outputs of different reactions, and a molecule that is both a 'has input' and an 'enabled by' each have a **separate individual**
 (shared instances break VPE causal-edge rendering); as well, each MF should be linked to a different instance of all contextual information (CC, BPs)
 - [ ] Cellular components are specified with 'occurs in', and cells and anatomical parts can be added with the 'part of' relation. 
 - [ ] Activities are connected to biological processes with 'part of'. 
@@ -240,6 +243,8 @@ barista add-fact --model $MODEL_ID \
 - Adding a `has output` when the `has input` is a gene product (use `directly regulates` instead)
 - Using UniProtKB for a model-organism gene product (use the MOD id: MGI/RGD/ZFIN/...); human is the exception
 - Representing one compound with two different CHEBI ids across a handoff (breaks the chain)
+- Splitting a handoff into two individuals (the output of one MF and the input of the next are one individual)
+- Sharing one individual between the inputs (or the outputs) of two different reactions
 - Placing a reaction byproduct on the wrong activity (e.g. the fatty acid from a ceramidase on a neighbouring chaperone)
 - Over-claiming IDA for a function the paper does not demonstrate (use ISS with the right reference or IC)
 - Citing a bare DOI instead of a PMID

@@ -51,7 +51,8 @@ The rules are in `gocam-best-practice` `references/Evidence_and_evidence_codes.m
 what the review adds:
 
 - Code against the experiment: read the cited figure, not the abstract or the
-  paper's conclusion. **[flag]** `with: IEP`
+  paper's conclusion.
+- IEP on a fact whose term is not a biological process. **[flag]** `with: IEP`
 - `with` present or absent as the code requires. **[flag]** `with`
 - Circular `with`: an IC citing the term it supports or the activity's own
   function; an ISS citing the gene being annotated. **[flag]** `with: circular`

@@ -54,8 +54,10 @@ what the review adds:
   paper's conclusion.
 - IEP on a fact whose term is not a biological process. **[flag]** `with: IEP`
 - `with` present or absent as the code requires. **[flag]** `with`
-- Circular `with`: an IC citing the term it supports or the activity's own
-  function; an ISS citing the gene being annotated. **[flag]** `with: circular`
+- Circular `with`: an IC citing the term it supports, or an ISS citing the gene
+  being annotated. An IC from the activity's own MF (e.g. MF → occurs in nucleus)
+  is legitimate if that MF has its own evidence; check that it does.
+  **[flag]** `with: circular`
 - Copy-paste `with`: one value repeated on facts where it cannot be right. Use
   the with/from inventory in `qc.md`.
 - Recipe mismatch between GO_REF and code. **[flag]** `with: recipe`
@@ -165,8 +167,12 @@ references. Without the full text, "not verified (abstract only)".
 
 ### G. Term choice, specificity, locations, enablers
 
-- Labels, obsolescence, `gocheck_do_not_annotate` and obsoletion candidates
-  for every class, and taxon constraints for the species. **[flag]** `terms`
+- Every class exists, is not obsolete, and is not in `gocheck_do_not_annotate`
+  (errors) or `gocheck_obsoletion_candidate` (warning). **[flag]** `terms`.
+  Read the labels the script prints: a label that does not match what the
+  curator meant is a wrong ID.
+- Taxon constraints for the model's species: not checked by the script; check
+  by hand (`taxon-constraint` skill) for terms with a restricted taxon range.
 - Specificity: as specific as the data support, no more. "protein binding" or
   a generic binding term where the paper shows the activity; a parent like
   "signal transduction" where the pathway is known; or a child the paper does

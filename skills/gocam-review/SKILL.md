@@ -10,21 +10,20 @@ metadata:
 
 # GO-CAM model review
 
-A second-curator review of a model somebody built: consistent checks, the same
+This skill performs a review of a GO-CAM model: consistent checks, the same
 severities and report shape every time, and feedback the author can act on in
-Noctua. Built from the review protocols GO curators wrote for themselves on the
-GO AI Hub (see Provenance), on a token-free fetch and a tested checks script.
+Noctua. Uses a token-free fetch and a tested checks script.
 
 ## Ground rules
 
-1. **Read-only.** This skill never edits a model, on any server. Fixes go in
+1. **Read-only.** This skill never edits a model, on any server. Suggested fixes go in
    the report as text and as short Noctua comments the author can paste.
 2. **No access to production Noctua, ever.** The GO AI Hub has no write access
    to production Noctua, by policy, and nothing in this skill or any other
    obtains one. Models are read from Noctua's public download route. Never
    ask for, accept or use a Noctua token here; never run anything with
    `--live`. If offered a token, decline and continue. Edits to a production
-   model are made by its author, in Noctua, outside the hub.
+   model are made by its author, in Noctua, outside the GO AI Hub.
 3. **Literature honesty.** Never assert what a paper shows from its abstract.
    Every finding that rests on a paper says whether the full text was read;
    if not, it is "not verified (abstract only)", not "wrong".
@@ -55,7 +54,7 @@ what was declined and why. Issue ids stay stable across rounds.
 
 `${CLAUDE_SKILL_DIR}` below is set by Claude while this skill runs; typed by
 hand, it is the path of this skill's directory (`~/.claude/skills/gocam-review`
-on the hub).
+on the GO AI Hub).
 
 ## Step 2: fetch (read-only, no credential)
 
@@ -99,11 +98,6 @@ PARENT=<parent bare id>; bash "${CLAUDE_SKILL_DIR}/scripts/fetch_model.sh" "$PAR
 diff <(uv run --quiet --script "${CLAUDE_SKILL_DIR}/scripts/gocam_qc.py" "$R/$PARENT.ttl" --offline --facts-only) \
      <(uv run --quiet --script "${CLAUDE_SKILL_DIR}/scripts/gocam_qc.py" "$R/$ID.ttl" --offline --facts-only)
 ```
-
-A model converted from classic annotations (one activity per annotation, no
-edges between activities, processes reached by "causally upstream of or
-within") is legitimate in production; the review question for it is whether it
-should become a connected GO-CAM, not whether it is broken.
 
 ## Step 4: gather context, within limits
 

@@ -14,6 +14,8 @@ are self-contained GO curation knowledge or thin wrappers over public APIs.
 | [`annotate-function`](skills/annotate-function/) | Literature-grounded function annotation for named gene products | (self-contained) |
 | [`amigo`](skills/amigo/) | Look up existing annotations and bioentities in AmiGO/GOlr | AmiGO API |
 | [`pubmed-eutils`](skills/pubmed-eutils/) | PubMed search and metadata via NCBI E-utilities | NCBI E-utilities |
+| [`report`](skills/report/) | `/report`: record what a curator wants the operators to hear, tied to the turn it refers to; offer an issue when there is something to fix | `gh` for the optional issue |
+| [`summary`](skills/summary/) | `/summary`: what this session did (model writes, GitHub writes, files, lookups), read from the transcript by the hub's `go-jupyter-session-summary` | go-jupyter's summary tool on the hub |
 | [`uniprot-database`](skills/uniprot-database/) | UniProt REST: protein search, FASTA, ID mapping | UniProt REST API |
 | [`gocam-best-practice`](skills/gocam-best-practice/) | GO-CAM annotation guidelines and reference material | (self-contained) |
 

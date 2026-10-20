@@ -104,6 +104,17 @@ The token is stored in the user's own `~/.env` (mode `0600`); ordinary unix
 permissions on the box are the protection, which is proportionate for a dev
 server.
 
+### The dev server's API namespace is `minerva_public_dev`
+
+The `noctua barista` CLI already addresses the right server and namespace;
+prefer it over hand-written HTTP calls. When a raw call is unavoidable (the
+`/save-to-drop-box` skill shows the sanctioned form), the path is
+`http://barista-dev.berkeleybop.org/api/minerva_public_dev/...`.
+`minerva_public_dev` is the dev server's API namespace for curator tooling.
+`minerva_public` is production's namespace and does not exist on
+noctua-dev; do not substitute it, and do not copy namespace names from
+production URLs or examples.
+
 ## Read Access
 
 To dump a model in minerva JSON:
@@ -197,6 +208,35 @@ the curator's call and travels as set.
   comments to an exported YAML by hand; CI compares YAML and TTL comments.
 - **Export both files back to back** from the stored state (`/save-to-drop-box`,
   step 3). Any later edit means store + re-export both again.
+
+### Raw minerva requests: only when `barista` has no command for it
+
+The `barista` commands take the model id as an argument and are the first
+choice. When an operation has no command (changing an individual's class, for
+example) and you post to `m3BatchPrivileged` yourself:
+
+- Send the same four fields the store command in `/save-to-drop-box` sends
+  (`token=$BARISTA_TOKEN`, `intention=action`,
+  `provided-by=http://geneontology.org`, `requests=...`); the export there
+  goes to the read-only `m3Batch` and needs none of them.
+- Build the JSON in a shell variable and pass it inline,
+  `--data-urlencode "requests=$payload"`; a quoted heredoc
+  (`payload=$(cat <<'EOF' ... EOF)`) keeps apostrophes in labels and comments
+  intact. If it must come from a file, create that file with `mktemp`, never
+  a fixed path such as `/tmp/req.json`: the hub is one machine shared by
+  every curator, and on 2026-10-14 a stale file of that name, left by one
+  curator, was posted by another curator's session with their token, which
+  put their name on a model they never touched.
+- Chain the steps with `&&` (the write, then the curl that reads the file) so
+  a failed write never reaches the send. `set -euo pipefail` belongs at the
+  top of a standalone script only; inside a function or an interactive shell
+  it leaks into the caller or is switched off by an `&&`/`if` context.
+- Print the payload before sending it and check that every `model-id` in it is
+  the model the curator is working on. The dev server accepts any valid token
+  for any model, so "don't edit models you didn't create" is yours to enforce.
+- Read the model back afterwards (`barista get-model`) and confirm the change
+  you meant is there; a `success` reply only says the server accepted what it
+  received.
 
 ### Evidence hygiene
 

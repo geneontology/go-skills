@@ -10,8 +10,8 @@ activity-type files); read the ones that match the model's activities.
 | Severity | Meaning |
 |---|---|
 | critical | The model makes a false statement, or cannot stand in production as is: wrong gene, a claim not in the paper, a missing enabler, a fact with no evidence, a single-activity model, an obsolete term, or a term present in the do-not-annotate or obsoletion-candidate subsets. |
-| major | A fact is unsupported or mis-coded: incorrect organism for the evidence code (experimental captured instead of ISS), ISS without an experimental source, a direct relation without a known mechanism, a reference that does not show the fact. Hygiene and style: malformed reference, malformed identifier in 'with/from' or inputs/outputs.|
-| moderate | Correct in substance but weakly supported or imprecise: a self-referential IC, a too-general term, an unverifiable reference, a bare DOI where a PMID exists, missing location or process. |
+| major | A fact is unsupported or mis-coded: incorrect organism for the evidence code (experimental captured instead of ISS),  a direct relation without a known mechanism, a reference that does not show the fact. Hygiene and style: malformed reference, malformed identifier in 'with/from' or inputs/outputs.|
+| moderate | Correct in substance but weakly supported or imprecise: a self-referential IC, a too-general term, an unverifiable reference, ISS without an experimental source, a bare DOI where a PMID exists, missing location or process. |
 | minor | Duplicate evidence line, leftover comment. |
 | note | Not a defect: a remark, a question for the curator, or something that is fine and worth saying. |
 
@@ -59,8 +59,8 @@ what the review adds:
 - Copy-paste `with`: one value repeated on facts where it cannot be right. Use
   the with/from inventory in `qc.md`.
 - Recipe mismatch between GO_REF and code. **[flag]** `with: recipe`
-- Reference form and duplicate evidence lines. **[flag]** `evidence`. A bare DOI
-  when a PMID exists is moderate (`gocam-review` rated it a blocker, `gocam-qc`
+- Reference form and duplicate evidence lines. **[flag]** `evidence`.
+- A bare DOI when a PMID exists is moderate (`gocam-review` rated it a blocker, `gocam-qc`
   hygiene).
 - IEA or IBA not copied from an existing annotation; NAS or TAS where a primary
   paper exists: note it.
@@ -85,8 +85,8 @@ The ISS recipe is in `Evidence_and_evidence_codes.md`. For every ortholog in a
 
 ### D. Species of the data and of the entities
 
-- An experimental code on a gene product of the model's taxon needs an
-  experiment on that species' gene product. Data on the mouse protein in a
+- An experimental evidence code on an assertion needs an
+  experiment on the species encoding the gene product enabler. Data on a mouse protein in a
   human model is ISS from the mouse gene, not IDA. A human protein in a
   heterologous system (HEK293, CHO, yeast, Xenopus oocytes) supports IDA on
   the human protein; say which it was. Only down-code the facts that rest
@@ -143,7 +143,8 @@ references. Without the full text, "not verified (abstract only)".
 - Inputs are the direct targets. Do not call a `has input` redundant because a
   causal edge exists; call it missing when a substrate, regulated gene,
   receptor ligand or activated effector is absent. When `has input` is a gene
-  product there is no `has output`; the relation is `directly regulates`.
+  product there is no `has output`; the relation is `directly regulates`,
+  except when there are intervening activities.
 - Molecule reuse: the productive handoff is good modelling. A molecule that is
   the `has output` of one activity and the `has input`, or the small-molecule
   activator or inhibitor, of a downstream activity should be the same

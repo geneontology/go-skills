@@ -9,6 +9,7 @@ are self-contained GO curation knowledge or thin wrappers over public APIs.
 |---|---|---|
 | [`gene-review`](skills/gene-review/) | Review a gene's GO annotations and write a validated review file | [ai4curation/ai-gene-review](https://github.com/ai4curation/ai-gene-review) |
 | [`noctua`](skills/noctua/) | Read and edit GO-CAM models on the Noctua dev server through barista | [noctua-py](https://github.com/geneontology/noctua-py) `barista` CLI |
+| [`gocam-review`](skills/gocam-review/) | Review an existing GO-CAM model (production or dev) read-only: structural QC, term checks, the validation checklist, a written report | Noctua download route, OLS4 API |
 | [`save-to-drop-box`](skills/save-to-drop-box/) | Save a finished model to the drop box as a YAML + Turtle pair under its dev id | [go-cam-drop-box](https://github.com/geneontology/go-cam-drop-box) |
 | [`annotate-function`](skills/annotate-function/) | Literature-grounded function annotation for named gene products | (self-contained) |
 | [`amigo`](skills/amigo/) | Look up existing annotations and bioentities in AmiGO/GOlr | AmiGO API |

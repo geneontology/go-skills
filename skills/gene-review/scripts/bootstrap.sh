@@ -41,8 +41,21 @@ if [ ! -e "$AIGR_HOME/justfile" ]; then
   fi
 elif [ -d "$AIGR_HOME/.git" ] && [ "${AIGR_NO_UPDATE:-0}" != "1" ]; then
   say "updating existing checkout"
-  git -C "$AIGR_HOME" pull -q --ff-only 2>/dev/null \
-    || say "note: could not fast-forward (local changes?); continuing with what is there"
+  # CAVEAT: `uv run` in a sparse checkout rewrites two tracked files (uv.lock
+  # loses the absent workspace members; cache/go/terms.csv is refreshed). A
+  # dirty copy of either blocks the fast-forward on every later run, so the
+  # checkout silently stays at its first-clone commit. Both are regenerated
+  # from pyproject.toml, so when pyproject.toml itself is untouched they are
+  # reset to the committed version before pulling.
+  if [ -z "$(git -C "$AIGR_HOME" status --porcelain -- pyproject.toml)" ]; then
+    for f in uv.lock cache/go/terms.csv; do
+      git -C "$AIGR_HOME" checkout -q -- "$f" 2>/dev/null || true
+    done
+  fi
+  if ! git -C "$AIGR_HOME" pull -q --ff-only 2>/dev/null; then
+    say "note: could not fast-forward; continuing with what is there. Locally modified tracked files:"
+    git -C "$AIGR_HOME" status --porcelain | grep -v '^??' | head -10 | sed 's/^/      /' || true
+  fi
 fi
 
 # ---- 2. organism directories (sparse checkouts only) -----------------------

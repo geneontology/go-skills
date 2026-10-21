@@ -18,6 +18,7 @@ are self-contained GO curation knowledge or thin wrappers over public APIs.
 | [`summary`](skills/summary/) | `/summary`: what this session did (model writes, GitHub writes, files, lookups), read from the transcript by the hub's `go-jupyter-session-summary` | go-jupyter's summary tool on the hub |
 | [`uniprot-database`](skills/uniprot-database/) | UniProt REST: protein search, FASTA, ID mapping | UniProt REST API |
 | [`gocam-best-practice`](skills/gocam-best-practice/) | GO-CAM annotation guidelines and reference material | (self-contained) |
+| [`gocam-qc`](skills/gocam-qc/) | Read-only QC of a GO-CAM model: report + tick-box checklist with Noctua comments | (self-contained; rdflib via `uv`) |
 
 ## Install
 

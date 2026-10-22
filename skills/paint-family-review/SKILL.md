@@ -136,7 +136,9 @@ OLS MCP for term lookup (never guess a GO ID; check for obsolete terms).
   clades; present such tiers separately from the well-supported ones.
 
 ### Style
-- Large families: mention small term-choice differences, don't chase them.
+- Large families: if two near-equivalent terms would both fit a node (e.g. a
+  parent vs. a slightly more specific child), note the alternative in one line
+  and move on; don't spend extra literature or analysis on choosing between them.
 - Keep options few and clearly secondary; unconfirmed options count as declined.
 - Leaving MF or BP blank when evidence is absent is a valid outcome; say so.
 

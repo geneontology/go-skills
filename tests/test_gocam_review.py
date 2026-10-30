@@ -241,12 +241,16 @@ class FlagCoverageTests(unittest.TestCase):
     def msgs(self, f, sev=None):
         return [x["message"] for x in f.items if sev is None or x["severity"] == sev]
 
-    def test_no_evidence_on_context_and_process_edges(self):
+    def test_no_evidence_on_context_edge_and_relation_outside_the_table(self):
+        # RO:0002264 (acts upstream of or within) is not a relation the VPE allows, so it is not in REL:
+        # the edge is still reported by CURIE, and the relation itself is noted as unknown.
         ttl = PREFIXES + "m:bp a owl:NamedIndividual, obo:GO_0007155 .\nm:a obo:BFO_0000050 m:bp .\nm:gp obo:RO_0002264 m:bp .\n"
         out, f = analyse(ttl, sparql=False)
         errs = " | ".join(self.msgs(f, "error"))
         self.assertIn("part of", errs); self.assertIn("has no evidence", errs)
-        self.assertIn("acts upstream of or within", errs)
+        self.assertIn("gp RO:0002264 bp has no evidence", errs)
+        self.assertNotIn("acts upstream of or within", errs)
+        self.assertTrue(any("RO:0002264 is not in this script's table" in m for m in self.msgs(f, "info")))
 
     def test_duplicate_evidence_line(self):
         ttl = PREFIXES + """

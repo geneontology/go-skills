@@ -53,39 +53,31 @@ GOMODEL = "http://model.geneontology.org/"
 
 # Relations, labelled from RO (ro.obo as of 2026-10-14). Four classes:
 #   CAUSAL   activity -> activity edges (the causal graph)
-#   PROCESS  activity or gene product -> process (the legacy annotation form)
+#   PROCESS  activity or gene product -> process (the legacy annotation form);
+#            empty: the acts upstream of relations are not GO-CAM relations
 #   REGULATOR molecule -> activity (small-molecule activator/inhibitor)
 #   CONTEXT  everything that hangs context off an activity or process
 REL = {
-    "RO:0002411": "causally upstream of", "RO:0002412": "immediately causally upstream of",
-    "RO:0012011": "indirectly causally upstream of", "RO:0012009": "constitutively upstream of",
+    "RO:0012009": "constitutively upstream of",
     "RO:0002418": "causally upstream of or within",
     "RO:0004046": "causally upstream of or within, negative effect", "RO:0004047": "causally upstream of or within, positive effect",
     "RO:0002304": "causally upstream of, positive effect", "RO:0002305": "causally upstream of, negative effect",
     "RO:0002629": "directly positively regulates", "RO:0002630": "directly negatively regulates", "RO:0002578": "directly regulates",
-    "RO:0002211": "regulates", "RO:0002212": "negatively regulates", "RO:0002213": "positively regulates",
     "RO:0012012": "indirectly regulates", "RO:0002407": "indirectly positively regulates", "RO:0002409": "indirectly negatively regulates",
     "RO:0002413": "provides input for", "RO:0002414": "transitively provides input for", "RO:0012010": "removes input for",
-    "RO:0002410": "causally related to",
     "RO:0002406": "obsolete directly activates", "RO:0002408": "obsolete directly inhibits",
-    "RO:0002263": "acts upstream of", "RO:0002264": "acts upstream of or within",
-    "RO:0004034": "acts upstream of, positive effect", "RO:0004035": "acts upstream of, negative effect",
-    "RO:0004032": "acts upstream of or within, positive effect", "RO:0004033": "acts upstream of or within, negative effect",
     "RO:0012005": "is small molecule activator of", "RO:0012006": "is small molecule inhibitor of",
     "RO:0002333": "enabled by", "RO:0002327": "enables",
     "BFO:0000050": "part of", "BFO:0000066": "occurs in", "BFO:0000051": "has part",
     "RO:0002233": "has input", "RO:0002234": "has output", "RO:0004009": "has primary input", "RO:0004008": "has primary output",
     "RO:0001025": "located in", "RO:0002092": "happens during", "RO:0002490": "existence overlaps", "RO:0002491": "existence starts and ends during",
-    "RO:0002473": "composed primarily of", "RO:0002331": "involved in",
-    "RO:0002296": "results in development of", "RO:0002297": "results in formation of anatomical entity", "RO:0002298": "results in morphogenesis of",
-    "RO:0002299": "results in maturation of", "RO:0002313": "transports or maintains localization of", "RO:0002338": "has target start location",
-    "RO:0002339": "has target end location", "RO:0002340": "imports", "RO:0002345": "exports", "RO:0002565": "results in movement of",
-    "RO:0002588": "results in assembly of", "RO:0002590": "results in disassembly of", "RO:0002592": "results in organization of",
+    "RO:0002331": "involved in", "RO:0002296": "results in development of", "RO:0002297": "results in formation of anatomical entity", "RO:0002298": "results in morphogenesis of",
+    "RO:0002299": "results in maturation of", 
 }
-CAUSAL = {"RO:0002411", "RO:0002412", "RO:0012011", "RO:0012009", "RO:0002418", "RO:0004046", "RO:0004047", "RO:0002304", "RO:0002305",
-          "RO:0002629", "RO:0002630", "RO:0002578", "RO:0002211", "RO:0002212", "RO:0002213", "RO:0012012", "RO:0002407", "RO:0002409",
-          "RO:0002413", "RO:0002414", "RO:0012010", "RO:0002410", "RO:0002406", "RO:0002408"}
-PROCESS = {"RO:0002263", "RO:0002264", "RO:0004034", "RO:0004035", "RO:0004032", "RO:0004033"}
+CAUSAL = {"RO:0012009", "RO:0002418", "RO:0004046", "RO:0004047", "RO:0002304", "RO:0002305",
+          "RO:0002629", "RO:0002630", "RO:0002578", "RO:0012012", "RO:0002407", "RO:0002409",
+          "RO:0002413", "RO:0002414", "RO:0012010", "RO:0002406", "RO:0002408"}
+PROCESS = set()
 REGULATOR = {"RO:0012005", "RO:0012006"}
 OBSOLETE_REL = {"RO:0002406": "RO:0002629", "RO:0002408": "RO:0002630"}
 CONTEXT = {k for k in REL if k not in CAUSAL and k not in PROCESS and k not in REGULATOR}

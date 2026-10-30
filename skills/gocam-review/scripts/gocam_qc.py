@@ -53,7 +53,8 @@ GOMODEL = "http://model.geneontology.org/"
 
 # Relations, labelled from RO (ro.obo as of 2026-10-14). Four classes:
 #   CAUSAL   activity -> activity edges (the causal graph)
-#   PROCESS  activity or gene product -> process (the legacy annotation form)
+#   PROCESS  activity or gene product -> process (the legacy annotation form);
+#            empty: the acts upstream of relations are not GO-CAM relations
 #   REGULATOR molecule -> activity (small-molecule activator/inhibitor)
 #   CONTEXT  everything that hangs context off an activity or process
 REL = {
@@ -64,6 +65,7 @@ REL = {
     "RO:0002629": "directly positively regulates", "RO:0002630": "directly negatively regulates", "RO:0002578": "directly regulates",
     "RO:0012012": "indirectly regulates", "RO:0002407": "indirectly positively regulates", "RO:0002409": "indirectly negatively regulates",
     "RO:0002413": "provides input for", "RO:0002414": "transitively provides input for", "RO:0012010": "removes input for",
+    "RO:0002406": "obsolete directly activates", "RO:0002408": "obsolete directly inhibits",
     "RO:0012005": "is small molecule activator of", "RO:0012006": "is small molecule inhibitor of",
     "RO:0002333": "enabled by", "RO:0002327": "enables",
     "BFO:0000050": "part of", "BFO:0000066": "occurs in", "BFO:0000051": "has part",
@@ -74,9 +76,10 @@ REL = {
 }
 CAUSAL = {"RO:0012009", "RO:0002418", "RO:0004046", "RO:0004047", "RO:0002304", "RO:0002305",
           "RO:0002629", "RO:0002630", "RO:0002578", "RO:0012012", "RO:0002407", "RO:0002409",
-          "RO:0002413", "RO:0002414", "RO:0012010"}
-PROCESS = {BFO:0000050"}
+          "RO:0002413", "RO:0002414", "RO:0012010", "RO:0002406", "RO:0002408"}
+PROCESS = set()
 REGULATOR = {"RO:0012005", "RO:0012006"}
+OBSOLETE_REL = {"RO:0002406": "RO:0002629", "RO:0002408": "RO:0002630"}
 CONTEXT = {k for k in REL if k not in CAUSAL and k not in PROCESS and k not in REGULATOR}
 ONTOLOGY_PREFIXES = ("GO", "RO", "ECO", "CHEBI", "CL", "UBERON", "PO", "BFO", "SO", "PR")
 MF_ROOT = "GO:0003674"

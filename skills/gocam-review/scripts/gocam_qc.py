@@ -72,12 +72,11 @@ REL = {
     "RO:0002331": "involved in", "RO:0002296": "results in development of", "RO:0002297": "results in formation of anatomical entity", "RO:0002298": "results in morphogenesis of",
     "RO:0002299": "results in maturation of", 
 }
-CAUSAL = {"RO:0012011", "RO:0012009", "RO:0002418", "RO:0004046", "RO:0004047", "RO:0002304", "RO:0002305",
+CAUSAL = {"RO:0012009", "RO:0002418", "RO:0004046", "RO:0004047", "RO:0002304", "RO:0002305",
           "RO:0002629", "RO:0002630", "RO:0002578", "RO:0012012", "RO:0002407", "RO:0002409",
           "RO:0002413", "RO:0002414", "RO:0012010"}
-PROCESS = {"RO:0004034", "RO:0004035", "RO:0004032", "RO:0004033"}
+PROCESS = {BFO:0000050"}
 REGULATOR = {"RO:0012005", "RO:0012006"}
-OBSOLETE_REL = {"RO:0002406": "RO:0002629", "RO:0002408": "RO:0002630"}
 CONTEXT = {k for k in REL if k not in CAUSAL and k not in PROCESS and k not in REGULATOR}
 ONTOLOGY_PREFIXES = ("GO", "RO", "ECO", "CHEBI", "CL", "UBERON", "PO", "BFO", "SO", "PR")
 MF_ROOT = "GO:0003674"

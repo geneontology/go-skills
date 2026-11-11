@@ -60,7 +60,9 @@ what the review adds:
   **[flag]** `with: circular`
 - Copy-paste `with`: one value repeated on facts where it cannot be right. Use
   the with/from inventory in `qc.md`.
-- Recipe mismatch between GO_REF and code. **[flag]** `with: recipe`
+- GO_REF and code must match: GO_REF:0000024 only with ISS/ISO/ISA/ISM,
+  GO_REF:0000033 only with IBA (and every IBA cites it), GO_REF:0000015 only
+  with ND, IEA GO_REFs only with IEA. **[flag]** `with: recipe`
 - Reference form and duplicate evidence lines. **[flag]** `evidence`.
 - A bare DOI when a PMID exists is moderate (`gocam-review` rated it a blocker, `gocam-qc`
   hygiene).
@@ -124,42 +126,37 @@ references. Without the full text, "not verified (abstract only)".
 
 ### F. Causal relations and molecule handling
 
-`Relation_selection.md` is the rule; the short version:
+The rules are in `gocam-best-practice`: `references/Relation_selection.md`
+(which causal relation, `provides input for`, inputs and outputs),
+`references/Chemical_entities_ChEBI.md` (ChEBI ids, handoffs),
+`references/Signaling_receptor_activity_annotation_guidelines.md` (ligand and
+receptor) and `SKILL.md` ("Distinct Individuals for Distinct Roles"). Check
+every causal edge and every input/output against them; what the review adds:
 
-- directly positively/negatively regulates: an immediately downstream
-  activity, no intervening activity, mechanism known. Without a known
-  mechanism: causally upstream of, positive/negative effect. indirectly
-  regulates: through a larger reusable process deliberately not drawn,
-  mechanism still known. provides input for: the upstream output is the
-  downstream input (only when the molecule itself is not modelled; when it is,
-  `has output` and `has input` carry it). removes input for: both act on the
-  same target site with opposite effect. constitutively upstream of: required,
-  not regulating.
 - Sign matches the data, direction is upstream to downstream, and the edge's
   reference shows the link between these two activities, not merely between
-  the two proteins somewhere. A ligand to its receptor is a causal relation,
-  not `has input`.
+  the two proteins somewhere.
+- Ligand and receptor: a protein ligand's activity both `has input` the
+  receptor and `directly positively regulates` the receptor's activity; the
+  receptor does not `has input` its ligand. A small-molecule ligand is
+  `is small molecule activator of` (or `inhibitor of`) the receptor activity.
 - Look at the whole chain: missing obvious steps, a regulated activity with no
   path to the process, a causal edge into a process when an activity in that
   process is known.
-- Inputs are the direct targets. Do not call a `has input` redundant because a
-  causal edge exists; call it missing when a substrate, regulated gene,
-  receptor ligand or activated effector is absent. When `has input` is a gene
-  product there is no `has output`; the relation is `directly regulates`,
-  except when there are intervening activities.
-- Molecule reuse: the productive handoff is good modelling. A molecule that is
-  the `has output` of one activity and the `has input`, or the small-molecule
-  activator or inhibitor, of a downstream activity should be the same
-  individual; that shared node is what represents the handoff. Only flag reuse
-  that forces one individual into contradictory roles or merges two separate
-  pools. Each activity has its own `part of` process individual; a process
-  node shared by several activities is a defect.
+- Do not call a `has input` redundant because a causal edge exists; call it
+  missing when a substrate, regulated gene, receptor or activated effector is
+  absent.
+- Individuals: a handoff (the `has output` of one activity is the `has input`
+  of the next) is one shared individual, and splitting it is a defect. One
+  individual shared by the inputs (or the outputs) of two different
+  reactions, or a process individual shared by several activities, is also
+  a defect.
 - Chemicals: reactants and products are the ChEBI ids of the enzyme's Rhea
-  reaction (UniProt `cc_catalytic_activity`); one compound keeps one ChEBI id
-  across a handoff; only primary substrate and product belong (cofactors,
-  donors, byproducts such as UDP, ATP, ADP, H2O, H+ do not). An obligate
-  coupled reaction (an exchange or antiport) is one activity with its full
-  participant set and one Rhea id, not two half-transfers.
+  reaction (UniProt `cc_catalytic_activity`); only primary substrate and
+  product belong (cofactors, donors, byproducts such as UDP, ATP, ADP, H2O,
+  H+ do not). An obligate coupled reaction (an exchange or antiport) is one
+  activity with its full participant set and one Rhea id, not two
+  half-transfers.
 - A metabolite `located in` a compartment needs direct evidence for that
   metabolite in that place (a transporter or marker paper is not), and the
   location must be compatible with the `occurs in` of the activities that

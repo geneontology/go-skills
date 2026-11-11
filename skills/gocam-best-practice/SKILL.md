@@ -228,7 +228,8 @@ barista add-fact --model $MODEL_ID \
 
 - Using obsolete terms
 - Using terms from the 'go_check_do_not_annotate' or gocheck_obsoletion_candidate subsets
-- Using 'has input' to specify a ligand for a receptor (should use causal relation instead)
+- Linking a protein ligand to its receptor with only one relation: the ligand activity both 'has input' the receptor and 'directly positively regulates' the receptor activity
+- Giving the receptor 'has input' its ligand (the receptor's input is the effector it regulates)
 - Using direct regulation when the mechanism is multi-step (use indirect)
 - Forgetting to specify cellular location with 'occurs in'
 - Creating activities without connecting them to biological processes

@@ -18,6 +18,7 @@ are self-contained GO curation knowledge or thin wrappers over public APIs.
 | [`summary`](skills/summary/) | `/summary`: what this session did (model writes, GitHub writes, files, lookups), read from the transcript by the hub's `go-jupyter-session-summary` | go-jupyter's summary tool on the hub |
 | [`uniprot-database`](skills/uniprot-database/) | UniProt REST: protein search, FASTA, ID mapping | UniProt REST API |
 | [`gocam-best-practice`](skills/gocam-best-practice/) | GO-CAM annotation guidelines and reference material | (self-contained) |
+| [`paint-family-review`](skills/paint-family-review/) | Review a PANTHER family for PAINT: propose node MF/BP/CC from experimental evidence on in-tree species, QC existing IBAs | PANTHER treeinfo API, QuickGO, UniProt REST |
 
 ## Install
 

@@ -17,6 +17,7 @@ are self-contained GO curation knowledge or thin wrappers over public APIs.
 | [`report`](skills/report/) | `/report`: record what a curator wants the operators to hear, tied to the turn it refers to; offer an issue when there is something to fix | `gh` for the optional issue |
 | [`summary`](skills/summary/) | `/summary`: what this session did (model writes, GitHub writes, files, lookups), read from the transcript by the hub's `go-jupyter-session-summary` | go-jupyter's summary tool on the hub |
 | [`uniprot-database`](skills/uniprot-database/) | UniProt REST: protein search, FASTA, ID mapping | UniProt REST API |
+| [`go-annotation-easy-closes`](skills/go-annotation-easy-closes/) | Read-only triage of go-annotation review tickets whose GO terms are obsolete (or slated for obsoletion) and have no annotations left; nothing is closed without curator approval of an exact list and text | `gh`, GO ontology and annotation lookups |
 | [`gocam-best-practice`](skills/gocam-best-practice/) | GO-CAM annotation guidelines and reference material | (self-contained) |
 
 ## Install

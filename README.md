@@ -12,6 +12,7 @@ are self-contained GO curation knowledge or thin wrappers over public APIs.
 | [`gocam-review`](skills/gocam-review/) | Review an existing GO-CAM model (production or dev) read-only: structural QC, term checks, the validation checklist, a written report | Noctua download route, OLS4 API |
 | [`save-to-drop-box`](skills/save-to-drop-box/) | Save a finished model to the drop box as a YAML + Turtle pair under its dev id | [go-cam-drop-box](https://github.com/geneontology/go-cam-drop-box) |
 | [`annotate-function`](skills/annotate-function/) | Literature-grounded function annotation for named gene products | (self-contained) |
+| [`annotation-review-ticket-close`](skills/annotation-review-ticket-close/) | Check whether a go-annotation "annotation review" ticket is done (term status in go-edit, Noctua, live mapping sources) and propose closing it; posts nothing without approval | `gh`, GOlr, barista, InterPro/UniProt/Reactome/HAMAP/Rfam APIs, `runoak` (ubergraph) |
 | [`amigo`](skills/amigo/) | Look up existing annotations and bioentities in AmiGO/GOlr | AmiGO API |
 | [`pubmed-eutils`](skills/pubmed-eutils/) | PubMed search and metadata via NCBI E-utilities | NCBI E-utilities |
 | [`report`](skills/report/) | `/report`: record what a curator wants the operators to hear, tied to the turn it refers to; offer an issue when there is something to fix | `gh` for the optional issue |
